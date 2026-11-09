@@ -1,0 +1,59 @@
+> Task :mvp:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :mvp:preBuild UP-TO-DATE
+> Task :mvp:preDebugBuild UP-TO-DATE
+> Task :mvp:generateDebugBuildConfig UP-TO-DATE
+> Task :mvp:checkDebugAarMetadata UP-TO-DATE
+> Task :mvp:generateDebugResValues UP-TO-DATE
+> Task :mvp:processDebugGoogleServices SKIPPED
+> Task :mvp:mapDebugSourceSetPaths UP-TO-DATE
+> Task :mvp:generateDebugResources UP-TO-DATE
+> Task :mvp:mergeDebugResources UP-TO-DATE
+> Task :mvp:packageDebugResources UP-TO-DATE
+> Task :mvp:parseDebugLocalResources UP-TO-DATE
+> Task :mvp:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :mvp:extractDeepLinksDebug UP-TO-DATE
+> Task :mvp:processDebugMainManifest UP-TO-DATE
+> Task :mvp:processDebugManifest UP-TO-DATE
+> Task :mvp:processDebugManifestForPackage UP-TO-DATE
+> Task :mvp:processDebugResources UP-TO-DATE
+> Task :mvp:javaPreCompileDebug UP-TO-DATE
+> Task :mvp:preDebugUnitTestBuild UP-TO-DATE
+> Task :mvp:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :mvp:mergeDebugShaders UP-TO-DATE
+> Task :mvp:compileDebugShaders NO-SOURCE
+> Task :mvp:generateDebugAssets UP-TO-DATE
+> Task :mvp:mergeDebugAssets UP-TO-DATE
+> Task :mvp:packageDebugUnitTestForUnitTest UP-TO-DATE
+> Task :mvp:generateDebugUnitTestConfig UP-TO-DATE
+> Task :mvp:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :mvp:compressDebugAssets UP-TO-DATE
+> Task :mvp:desugarDebugFileDependencies UP-TO-DATE
+> Task :mvp:checkDebugDuplicateClasses UP-TO-DATE
+> Task :mvp:mergeExtDexDebug UP-TO-DATE
+> Task :mvp:mergeLibDexDebug UP-TO-DATE
+> Task :mvp:mergeDebugJniLibFolders UP-TO-DATE
+> Task :mvp:mergeDebugNativeLibs UP-TO-DATE
+> Task :mvp:stripDebugDebugSymbols UP-TO-DATE
+> Task :mvp:validateSigningDebug UP-TO-DATE
+> Task :mvp:writeDebugAppMetadata UP-TO-DATE
+> Task :mvp:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :mvp:compileDebugKotlin
+> Task :mvp:compileDebugJavaWithJavac UP-TO-DATE
+> Task :mvp:processDebugJavaRes UP-TO-DATE
+> Task :mvp:bundleDebugClassesToRuntimeJar
+> Task :mvp:bundleDebugClassesToCompileJar
+> Task :mvp:dexBuilderDebug
+> Task :mvp:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :mvp:mergeDebugJavaResource UP-TO-DATE
+> Task :mvp:mergeProjectDexDebug
+> Task :mvp:packageDebug
+> Task :mvp:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :mvp:assembleDebug
+> Task :mvp:compileDebugUnitTestKotlin
+> Task :mvp:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :mvp:processDebugUnitTestJavaRes UP-TO-DATE
+
+> Task :mvp:testDebugUnitTest
+
+BUILD SUCCESSFUL in 22s
+45 actionable tasks: 8 executed, 37 up-to-date

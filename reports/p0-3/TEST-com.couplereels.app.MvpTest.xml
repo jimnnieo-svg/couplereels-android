@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.MvpTest" tests="16" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:44:02" hostname="085cd14ad3aa" time="0.051">
+  <properties/>
+  <testcase name="separateCouplesDoNotReceiveOtherCoupleTastes" classname="com.couplereels.app.MvpTest" time="0.009"/>
+  <testcase name="boundsTopTenAndRejectsProfileUrls" classname="com.couplereels.app.MvpTest" time="0.002"/>
+  <testcase name="unlinkClearsBothFeedsAndOldCodeCannotBeUsed" classname="com.couplereels.app.MvpTest" time="0.005"/>
+  <testcase name="weightedSimilarityRanksMatchingCandidate" classname="com.couplereels.app.MvpTest" time="0.0"/>
+  <testcase name="rejectsWrongPasswordAndDuplicateAccount" classname="com.couplereels.app.MvpTest" time="0.002"/>
+  <testcase name="unknownTagsDoNotImplyVideoAnalysis" classname="com.couplereels.app.MvpTest" time="0.001"/>
+  <testcase name="rankingIsDeterministicWithUnclassifiedCandidates" classname="com.couplereels.app.MvpTest" time="0.002"/>
+  <testcase name="excludesPrivateOriginalByHash" classname="com.couplereels.app.MvpTest" time="0.001"/>
+  <testcase name="twoAccountsReceiveLatestPartnerTasteWithoutOriginal" classname="com.couplereels.app.MvpTest" time="0.004"/>
+  <testcase name="accountsLoginAndProfile" classname="com.couplereels.app.MvpTest" time="0.002"/>
+  <testcase name="fullCoupleCannotAcceptThirdAndLinkedUserCannotCreateAnother" classname="com.couplereels.app.MvpTest" time="0.005"/>
+  <testcase name="changedTasteChangesRanking" classname="com.couplereels.app.MvpTest" time="0.001"/>
+  <testcase name="failedPersistenceDoesNotReportSuccessfulRegistration" classname="com.couplereels.app.MvpTest" time="0.002"/>
+  <testcase name="persistedDatabaseAndSessionRestoreAfterRepositoryRestart" classname="com.couplereels.app.MvpTest" time="0.004"/>
+  <testcase name="deduplicatesTrackingAndMergesMetadata" classname="com.couplereels.app.MvpTest" time="0.001"/>
+  <testcase name="savedReelsArePerAccountAndDeduplicated" classname="com.couplereels.app.MvpTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

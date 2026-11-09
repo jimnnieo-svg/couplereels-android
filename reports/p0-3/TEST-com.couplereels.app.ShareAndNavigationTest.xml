@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.ShareAndNavigationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:44:03" hostname="085cd14ad3aa" time="0.159">
+  <properties/>
+  <testcase name="profileAndWrongMimeAreNotAcceptedAsReels" classname="com.couplereels.app.ShareAndNavigationTest" time="0.056"/>
+  <testcase name="recommendationOpensExplicitInternalProbeInsteadOfExternalInstagram" classname="com.couplereels.app.ShareAndNavigationTest" time="0.031"/>
+  <testcase name="unsafePlaybackUrlIsRejectedBeforeNavigation" classname="com.couplereels.app.ShareAndNavigationTest" time="0.027"/>
+  <testcase name="actionSendUsesTheSameParserAsActivityAndCanonicalizesTracking" classname="com.couplereels.app.ShareAndNavigationTest" time="0.045"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

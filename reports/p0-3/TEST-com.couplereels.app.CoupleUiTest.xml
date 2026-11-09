@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.CoupleUiTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:43:52" hostname="085cd14ad3aa" time="9.449">
+  <properties/>
+  <testcase name="twoAccountsConnectAndRepeatedShareSurvivesLogin" classname="com.couplereels.app.CoupleUiTest" time="9.449"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.CrossRecommendationTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:44:02" hostname="085cd14ad3aa" time="0.17">
+  <properties/>
+  <testcase name="shareUpdatesObservedPartnerFeedAndTasteChangeReordersIt" classname="com.couplereels.app.CrossRecommendationTest" time="0.087"/>
+  <testcase name="restartedPairRetainsLatestTasteExclusionsAndSavedRecommendation" classname="com.couplereels.app.CrossRecommendationTest" time="0.02"/>
+  <testcase name="privateShareProducesNineCandidatesWithoutFillingFakeTenth" classname="com.couplereels.app.CrossRecommendationTest" time="0.007"/>
+  <testcase name="concurrentJoinAttemptsAdmitOnlyOnePartner" classname="com.couplereels.app.CrossRecommendationTest" time="0.01"/>
+  <testcase name="savingAndResharingDoesNotRemoveExistingInterest" classname="com.couplereels.app.CrossRecommendationTest" time="0.004"/>
+  <testcase name="newCoupleDoesNotInheritFormerPartnersTasteOrExclusions" classname="com.couplereels.app.CrossRecommendationTest" time="0.007"/>
+  <testcase name="invalidSharedUrlCannotChangePartnersFeed" classname="com.couplereels.app.CrossRecommendationTest" time="0.003"/>
+  <testcase name="unlinkRemovesObservedFeedImmediately" classname="com.couplereels.app.CrossRecommendationTest" time="0.006"/>
+  <testcase name="accountSwitchCannotUsePreviousAccountsCatalog" classname="com.couplereels.app.CrossRecommendationTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

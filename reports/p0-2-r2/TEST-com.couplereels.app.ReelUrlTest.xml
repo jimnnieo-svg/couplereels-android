@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.ReelUrlTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:21:28" hostname="085cd14ad3aa" time="0.007">
+  <properties/>
+  <testcase name="stripsTracking" classname="com.couplereels.app.ReelUrlTest" time="0.001"/>
+  <testcase name="rejectsHostSpoofing" classname="com.couplereels.app.ReelUrlTest" time="0.0"/>
+  <testcase name="extractsShare" classname="com.couplereels.app.ReelUrlTest" time="0.005"/>
+  <testcase name="allTenAreUniqueReels" classname="com.couplereels.app.ReelUrlTest" time="0.0"/>
+  <testcase name="blocksAppAndFileNavigation" classname="com.couplereels.app.ReelUrlTest" time="0.0"/>
+  <testcase name="rejectsNonReels" classname="com.couplereels.app.ReelUrlTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

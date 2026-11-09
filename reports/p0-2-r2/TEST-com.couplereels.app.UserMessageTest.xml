@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.UserMessageTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:21:22" hostname="085cd14ad3aa" time="5.681">
+  <properties/>
+  <testcase name="expiredLoginRequestsReauthentication" classname="com.couplereels.app.UserMessageTest" time="5.475"/>
+  <testcase name="badCredentialsDoNotExposeServicePayload" classname="com.couplereels.app.UserMessageTest" time="0.057"/>
+  <testcase name="unknownServiceErrorDoesNotExposeDetails" classname="com.couplereels.app.UserMessageTest" time="0.037"/>
+  <testcase name="networkFailureProvidesRetryGuidance" classname="com.couplereels.app.UserMessageTest" time="0.05"/>
+  <testcase name="domainValidationMessageIsPreserved" classname="com.couplereels.app.UserMessageTest" time="0.029"/>
+  <testcase name="permissionFailureExplainsCoupleAccess" classname="com.couplereels.app.UserMessageTest" time="0.032"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

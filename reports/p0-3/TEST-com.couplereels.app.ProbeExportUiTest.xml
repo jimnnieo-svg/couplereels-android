@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.couplereels.app.ProbeExportUiTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-09T12:44:02" hostname="085cd14ad3aa" time="0.562">
+  <properties/>
+  <testcase name="manuallyUnverifiedPlaybackResultCanBeExportedWithoutClaimingSuccess" classname="com.couplereels.app.ProbeExportUiTest" time="0.562"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

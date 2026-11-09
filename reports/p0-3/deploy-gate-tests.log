@@ -1,0 +1,20 @@
+
+> test:gate
+> node --test scripts/gate.test.cjs
+
+✔ BLOCKED, FAIL, RUNNING and missing reports forbid deployment (1.378745ms)
+✔ missing or stale exact-source fingerprints forbid deployment (0.315015ms)
+✔ only passing unchanged fingerprints satisfy verification guard (0.306522ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.530857
+npm notice
+npm notice New major version of npm available! 11.9.0 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

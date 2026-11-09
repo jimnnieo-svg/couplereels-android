@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed() { return request.auth != null; }
+  function owner(uid) { return signed() && request.auth.uid == uid; }
+  function profile(uid) { return /databases/$(database)/documents/users/$(uid); }
+  function couple(cid) { return /databases/$(database)/documents/couples/$(cid); }
+  function free() { let p = get(profile(request.auth.uid)).data; return p.coupleId == null || !get(couple(p.coupleId)).data.active; }
+  function member(cid) { return signed() && request.auth.uid in get(couple(cid)).data.members; }
+  function activeMember(cid) { return member(cid) && get(couple(cid)).data.active; }
+  function tags(t) { return t is list && t.size() <= 11 && t.hasOnly(['silver','necklace','minimal','gift','pendant','daily','jewelry','925','budget','anniversary','date']); }
+  function validProfile(d, uid) { return d.keys().hasOnly(['uid','email','name','coupleId']) && d.uid == uid && d.email == request.auth.token.email && d.name is string && d.name.size() > 0 && d.name.size() <= 40 && (d.coupleId == null || d.coupleId is string); }
+  function validLinkChange() {
+   let next = request.resource.data.coupleId;
+   let old = resource.data.coupleId;
+   return next == old || (next == null && (old == null || !getAfter(couple(old)).data.active)) ||
+    (next is string && (old == null || !get(couple(old)).data.active) && getAfter(couple(next)).data.active && request.auth.uid in getAfter(couple(next)).data.members);
+  }
+  match /users/{uid} {
+   allow read: if owner(uid);
+   allow create: if owner(uid) && validProfile(request.resource.data, uid) && request.resource.data.coupleId == null;
+   allow update: if owner(uid) && validProfile(request.resource.data, uid) && validLinkChange();
+   allow delete: if false;
+   match /saved/{id} {
+    allow read: if owner(uid);
+    allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['url','tags','liked','privateSource']) && request.resource.data.url is string && request.resource.data.url.matches('https://www[.]instagram[.]com/reel/[A-Za-z0-9_-]+/') && tags(request.resource.data.tags) && request.resource.data.liked is bool && request.resource.data.privateSource is bool;
+    allow delete: if owner(uid);
+   }
+  }
+  match /couples/{cid} {
+   // High-entropy 128-bit bearer invite. Nonmembers may GET an unclaimed code, never list couples.
+   allow get: if signed() && (request.auth.uid in resource.data.members || (resource.data.active && resource.data.members.size() == 1 && free()));
+   allow list: if false;
+   allow create: if signed() && cid.matches('[A-F0-9]{32}') && request.resource.data.keys().hasOnly(['members','active']) && request.resource.data.members == [request.auth.uid] && request.resource.data.active == true && free() && getAfter(profile(request.auth.uid)).data.coupleId == cid;
+   allow update: if signed() && request.resource.data.keys().hasOnly(['members','active']) && resource.data.active &&
+    ((request.auth.uid in resource.data.members && request.resource.data.members == resource.data.members && request.resource.data.active == false) ||
+     (resource.data.members.size() == 1 && !(request.auth.uid in resource.data.members) && free() && request.resource.data.active == true && request.resource.data.members == resource.data.members.concat([request.auth.uid]) && getAfter(profile(request.auth.uid)).data.coupleId == cid));
+   allow delete: if false;
+   match /tastes/{uid} {
+    allow read: if activeMember(cid);
+    allow create, update: if owner(uid) && activeMember(cid) && request.resource.data.keys().hasOnly(['tags','excludedIds','updatedAt']) && tags(request.resource.data.tags) && request.resource.data.tags.size() > 0 && request.resource.data.excludedIds is list && request.resource.data.excludedIds.size() <= 100 && request.resource.data.updatedAt == request.time && (!exists(/databases/$(database)/documents/couples/$(cid)/tastes/$(uid)) || request.resource.data.excludedIds.hasAll(resource.data.excludedIds));
+    allow delete: if false;
+   }
+   match /events/{id} {
+    allow read: if activeMember(cid);
+    allow create: if activeMember(cid) && request.resource.data.keys().hasOnly(['authorId','tags','updatedAt']) && request.resource.data.authorId == request.auth.uid && tags(request.resource.data.tags) && request.resource.data.tags.size() > 0 && request.resource.data.updatedAt == request.time;
+    allow update, delete: if false;
+   }
+  }
+  match /{document=**} { allow read, write: if false; }
+ }
+}

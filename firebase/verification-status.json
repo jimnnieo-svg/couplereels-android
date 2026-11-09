@@ -1,0 +1,10 @@
+{
+  "status": "BLOCKED",
+  "reason": "Official Emulator unavailable: network policy denies storage.googleapis.com. User cannot add host. Do not bypass or deploy.",
+  "hashes": {
+    "firestore.rules": "37aea1673fc0024fd7116fba0c57ff5fca6051a537527addd589ddc3c6b96ff6",
+    "rules.test.cjs": "f57fbc00880b43d17e3a1bd86836f98dfd24dd998dbf37c472d31c265ba921b6",
+    "package-lock.json": "06d04ef030e0896d2946f866f760db309c35ab0b50dd8678608126c1b78d62ad",
+    "firebase.json": "5631cf47c6a3ef80918131c9d0cb8eaa93dabedb25cee1afe0715162c8b251dc"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-couplereels 'node --test rules.test.cjs'",
+    "verify:rules": "node scripts/verify-local.cjs",
+    "check:deployment": "node scripts/rules-verification.cjs",
+    "test:gate": "node --test scripts/gate.test.cjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "4.0.1",
+    "firebase": "11.4.0",
+    "firebase-tools": "14.0.0"
+  }
+}
