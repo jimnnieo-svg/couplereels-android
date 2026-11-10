@@ -26,6 +26,18 @@ service cloud.firestore {
     allow create, update: if owner(uid) && request.resource.data.keys().hasOnly(['url','tags','liked','privateSource']) && request.resource.data.url is string && request.resource.data.url.matches('https://www[.]instagram[.]com/reel/[A-Za-z0-9_-]+/') && tags(request.resource.data.tags) && request.resource.data.liked is bool && request.resource.data.privateSource is bool;
     allow delete: if owner(uid);
    }
+   // A person's preferences can exist before couple linking. Only their own
+   // account may read this document; the partner sees a separate tags-only copy.
+   match /preferences/{id} {
+    allow read: if owner(uid) && id == 'taste';
+    allow create, update: if owner(uid) && id == 'taste' &&
+     request.resource.data.keys().hasOnly(['tags','excludedIds','updatedAt']) &&
+     tags(request.resource.data.tags) &&
+     request.resource.data.excludedIds is list && request.resource.data.excludedIds.size() <= 100 &&
+     request.resource.data.updatedAt == request.time &&
+     (!exists(/databases/$(database)/documents/users/$(uid)/preferences/taste) || request.resource.data.excludedIds.hasAll(resource.data.excludedIds));
+    allow delete: if false;
+   }
   }
   match /couples/{cid} {
    // High-entropy 128-bit bearer invite. Nonmembers may GET an unclaimed code, never list couples.

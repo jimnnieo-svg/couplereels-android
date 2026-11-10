@@ -7,6 +7,15 @@ before(async()=>{env=await initializeTestEnvironment({projectId:'demo-couplereel
 for(const [db,id] of [[a,'a'],[b,'b'],[c,'c'],[d,'d']])await setDoc(doc(db,'users',id),{uid:id,email:id+'@test.local',name:id,coupleId:null});});
 after(async()=>{await env?.cleanup()});
 test('01 owner issues code atomically; unpaired user cannot list couples',async()=>{const batch=writeBatch(a);batch.set(doc(a,'couples',code),{members:['a'],active:true});batch.update(doc(a,'users','a'),{coupleId:code});await assertSucceeds(batch.commit());await assertFails(getDocs(collection(b,'couples')));await assertSucceeds(getDoc(doc(b,'couples',code)));});
+test('01b unpaired user can save their own private tastes but nobody else can read them',async()=>{const ref=doc(b,'users','b','preferences','taste');
+ await assertSucceeds(setDoc(ref,{tags:['silver'],excludedIds:['secret-hash'],updatedAt:serverTimestamp()}));
+ await assertSucceeds(getDoc(ref));
+ await assertFails(getDoc(doc(a,'users','b','preferences','taste')));
+ await assertFails(setDoc(doc(a,'users','b','preferences','taste'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));
+ await assertFails(setDoc(ref,{tags:['unknown'],excludedIds:['secret-hash'],updatedAt:serverTimestamp()}));
+ await assertFails(setDoc(ref,{tags:['date'],excludedIds:[],updatedAt:serverTimestamp()}));
+ await assertFails(setDoc(ref,{tags:['date'],excludedIds:['secret-hash'],url:'https://www.instagram.com/reel/secret/',updatedAt:serverTimestamp()}));
+});
 test('02 joining must update own profile in same commit',async()=>{await assertFails(updateDoc(doc(b,'couples',code),{members:['a','b']}));const batch=writeBatch(b);batch.update(doc(b,'couples',code),{members:['a','b']});batch.update(doc(b,'users','b'),{coupleId:code});await assertSucceeds(batch.commit());});
 test('03 partner receives tags but cannot read original URLs or profile',async()=>{await assertSucceeds(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['silver'],excludedIds:['hash'],updatedAt:serverTimestamp()}));await assertSucceeds(getDoc(doc(b,'couples',code,'tastes','a')));await setDoc(doc(a,'users','a','saved','original'),{url:'https://www.instagram.com/reel/DUnumljCZlg/',tags:['silver'],liked:false,privateSource:true});await assertFails(getDoc(doc(b,'users','a','saved','original')));await assertFails(getDoc(doc(b,'users','a')));});
 test('04 another couple cannot read or write first couple data',async()=>{const batch=writeBatch(c);batch.set(doc(c,'couples',other),{members:['c'],active:true});batch.update(doc(c,'users','c'),{coupleId:other});await batch.commit();const join=writeBatch(d);join.update(doc(d,'couples',other),{members:['c','d']});join.update(doc(d,'users','d'),{coupleId:other});await join.commit();await assertFails(getDoc(doc(c,'couples',code)));await assertFails(getDocs(collection(c,'couples',code,'tastes')));await assertFails(setDoc(doc(c,'couples',code,'tastes','a'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));});

@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable data class FakeAccount(val profile: Profile, val passwordHash: String)
-@Serializable data class FakeSnapshot(val accounts: Map<String, FakeAccount> = emptyMap(), val couples: Map<String, Couple> = emptyMap(), val tastes: Map<String, Map<String, Taste>> = emptyMap(), val saved: Map<String, List<SavedReel>> = emptyMap())
+@Serializable data class FakeSnapshot(val accounts: Map<String, FakeAccount> = emptyMap(), val couples: Map<String, Couple> = emptyMap(), val tastes: Map<String, Map<String, Taste>> = emptyMap(), val saved: Map<String, List<SavedReel>> = emptyMap(), val personalTastes: Map<String, Taste> = emptyMap())
 class FakeBackend(initial: FakeSnapshot = FakeSnapshot(), private val persist: (FakeSnapshot) -> Unit = {}) {
  internal val data = MutableStateFlow(initial)
  private val lock = Mutex()
@@ -22,7 +22,7 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
   val user = db.accounts[uid]?.profile
   val c = db.couples[user?.coupleId]?.takeIf { it.active && uid in it.members }
   val cid = user?.coupleId?.takeIf { c != null }
-  AppData(user, cid, c?.members.orEmpty(), db.tastes[cid]?.get(uid) ?: Taste(), db.tastes[cid]?.filterKeys { it != uid }?.values?.firstOrNull() ?: Taste(), db.saved[uid].orEmpty())
+  AppData(user, cid, c?.members.orEmpty(), db.tastes[cid]?.get(uid) ?: db.personalTastes[uid] ?: Taste(), db.tastes[cid]?.filterKeys { it != uid }?.values?.firstOrNull() ?: Taste(), db.saved[uid].orEmpty())
  }.stateIn(scope, SharingStarted.Eagerly, AppData())
  private fun uid() = session.value ?: error("로그인이 필요합니다.")
  private fun setSession(uid: String?) { persistSession(uid); session.value = uid }
@@ -40,7 +40,12 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
  override suspend fun rename(name: String) { val n = requireName(name); val id = uid(); backend.change { db -> val a = db.accounts.getValue(id); db.copy(accounts = db.accounts + (id to a.copy(profile = a.profile.copy(name = n)))) } }
  override suspend fun createCode(): String {
   val id = uid(); val code = UUID.randomUUID().toString().replace("-", "").uppercase()
-  backend.change { db -> val a = db.accounts.getValue(id); require(db.couples[a.profile.coupleId]?.active != true) { "기존 연결을 먼저 해제하세요." }; db.copy(couples = db.couples + (code to Couple(listOf(id))), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = code)))) }
+  backend.change { db ->
+   val a = db.accounts.getValue(id); require(db.couples[a.profile.coupleId]?.active != true) { "기존 연결을 먼저 해제하세요." }
+   val ownTaste = db.personalTastes[id]
+   db.copy(couples = db.couples + (code to Couple(listOf(id))), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = code))),
+    tastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.tastes + (code to (db.tastes[code].orEmpty() + (id to ownTaste))) else db.tastes)
+  }
   return code
  }
  override suspend fun join(code: String) {
@@ -49,23 +54,34 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
    val a = db.accounts.getValue(id); require(db.couples[a.profile.coupleId]?.active != true) { "기존 연결을 먼저 해제하세요." }
    val c = db.couples[key] ?: error("연결 코드를 확인하세요.")
    require(c.active && c.members.size == 1 && id !in c.members) { "사용할 수 없는 코드입니다." }
-   db.copy(couples = db.couples + (key to c.copy(members = c.members + id)), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = key))))
+   val ownTaste = db.personalTastes[id]
+   db.copy(couples = db.couples + (key to c.copy(members = c.members + id)), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = key))),
+    tastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.tastes + (key to (db.tastes[key].orEmpty() + (id to ownTaste))) else db.tastes)
   }
  }
  override suspend fun unlink() {
-  val id = uid(); backend.change { db -> val a = db.accounts.getValue(id); val cid = a.profile.coupleId; val c = db.couples[cid]; db.copy(accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = null))), couples = if (c != null && cid != null) db.couples + (cid to c.copy(active = false)) else db.couples) }
+  val id = uid(); backend.change { db ->
+   val a = db.accounts.getValue(id); val cid = a.profile.coupleId; val c = db.couples[cid]
+   val retained = db.personalTastes[id] ?: db.tastes[cid]?.get(id)
+   db.copy(accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = null))),
+    couples = if (c != null && cid != null) db.couples + (cid to c.copy(active = false)) else db.couples,
+    personalTastes = if (retained != null) db.personalTastes + (id to retained) else db.personalTastes)
+  }
  }
  override suspend fun publish(tags: Set<String>, url: String?, privateSource: Boolean) {
   val t = requireTags(tags); val normalized = url?.takeIf { it.isNotBlank() }?.let { ReelUrl.normalize(it) ?: error("개별 Reel URL을 확인하세요.") }; val id = uid()
   backend.change { db ->
-   val cid = db.accounts.getValue(id).profile.coupleId ?: error("먼저 커플을 연결하세요.")
-   require(db.couples[cid]?.let { it.active && id in it.members } == true) { "연결이 해제되었습니다." }
-   val previous = db.tastes[cid]?.get(id) ?: Taste()
+   val cid = db.accounts.getValue(id).profile.coupleId?.takeIf { candidate -> db.couples[candidate]?.let { it.active && id in it.members } == true }
+   val previous = db.personalTastes[id] ?: db.tastes[cid]?.get(id) ?: Taste()
    val exclude = previous.excludedIds + if (normalized != null && privateSource) setOf(digest(normalized)) else emptySet()
    require(exclude.size <= 100) { "비공개 원본 100개 제한에 도달했습니다." }
-   val taste = Taste(t, exclude, System.currentTimeMillis())
-   val saved = if (normalized != null) db.saved + (id to (db.saved[id].orEmpty().filterNot { it.url == normalized } + SavedReel(normalized, t, liked = db.saved[id].orEmpty().find { it.url == normalized }?.liked ?: false, privateSource = privateSource))) else db.saved
-   db.copy(tastes = db.tastes + (cid to (db.tastes[cid].orEmpty() + (id to taste))), saved = saved)
+   val taste = Taste(if (normalized != null) previous.tags + t else t, exclude, System.currentTimeMillis())
+   val saved = if (normalized != null) {
+    val existing = db.saved[id].orEmpty().find { it.url == normalized }
+    db.saved + (id to (db.saved[id].orEmpty().filterNot { it.url == normalized } + SavedReel(normalized, existing?.tags.orEmpty() + t, liked = existing?.liked ?: false, privateSource = privateSource)))
+   } else db.saved
+   db.copy(personalTastes = db.personalTastes + (id to taste),
+    tastes = if (cid != null) db.tastes + (cid to (db.tastes[cid].orEmpty() + (id to taste))) else db.tastes, saved = saved)
   }
  }
  override suspend fun saveRecommendation(url: String) {

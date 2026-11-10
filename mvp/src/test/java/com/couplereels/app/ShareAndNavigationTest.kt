@@ -1,6 +1,7 @@
 package com.couplereels.app
 
 import android.content.Intent
+import android.text.SpannableString
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.*
 import org.junit.Test
@@ -14,6 +15,11 @@ class ShareAndNavigationTest {
  @Test fun actionSendUsesTheSameParserAsActivityAndCanonicalizesTracking() {
   val intent = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "추천 링크 ${ReelUrl.candidates[0]}?igsh=x")
   assertEquals(ReelUrl.candidates[0], ReelIntents.sharedUrl(intent))
+ }
+ @Test fun acceptsStyledTextExtraFromExternalShareTargets() {
+  val intent = Intent(Intent.ACTION_SEND).setType("text/plain")
+   .putExtra(Intent.EXTRA_TEXT, SpannableString("릴스 보기: ${ReelUrl.candidates[1]}?igsh=123"))
+  assertEquals(ReelUrl.candidates[1], ReelIntents.sharedUrl(intent))
  }
  @Test fun profileAndWrongMimeAreNotAcceptedAsReels() {
   assertNull(ReelIntents.sharedUrl(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "https://www.instagram.com/profile/")))

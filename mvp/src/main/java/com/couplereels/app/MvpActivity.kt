@@ -13,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,6 +26,17 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+
+private val blushPink = Color(0xFFED82A2)
+private val softPink = Color(0xFFFBE6EC)
+private val ivory = Color(0xFFFFF9F7)
+private val charcoal = Color(0xFF302B30)
+private val tagLabels = mapOf(
+ "silver" to "실버", "necklace" to "목걸이", "minimal" to "미니멀",
+ "gift" to "선물", "pendant" to "펜던트", "daily" to "데일리",
+ "jewelry" to "주얼리", "925" to "925 실버", "budget" to "가성비",
+ "anniversary" to "기념일", "date" to "데이트"
+)
 
 class MvpActivity : ComponentActivity() {
  private var incoming by mutableStateOf("")
@@ -39,13 +51,13 @@ class MvpActivity : ComponentActivity() {
  private val firestore by lazy { FirebaseFirestore.getInstance().apply { firestoreSettings = FirebaseFirestoreSettings.Builder().setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()).build() } }
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState); if (savedInstanceState == null) receive(intent)
-  setContent { MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFFF9EBBA), background = Color(0xFF270005), surface = Color(0xFF270005))) { Surface(Modifier.fillMaxSize()) { App() } } }
+  setContent { MaterialTheme(colorScheme = lightColorScheme(primary = blushPink, onPrimary = Color.White, background = ivory, onBackground = charcoal, surface = ivory, onSurface = charcoal, secondaryContainer = softPink, onSecondaryContainer = charcoal)) { Surface(Modifier.fillMaxSize()) { App() } } }
  }
- override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); receive(intent) }
+ override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); receive(intent) }
  private fun receive(i: Intent) {
   if (i.action != Intent.ACTION_SEND) return
   val url = ReelIntents.sharedUrl(i)
-  if (url == null) shareError = "공유된 내용에서 유효한 Instagram Reel URL을 찾지 못했습니다."
+  if (url == null) { incoming = ""; shareError = "릴스 링크를 받지 못했어요. 인스타그램 릴스의 링크 공유를 선택하거나 링크를 복사해서 붙여넣어 주세요." }
   else { shareError = null; incoming = url }
  }
  private fun play(url: String?) { startActivity(ReelIntents.playback(this, url)) }
@@ -61,7 +73,9 @@ class MvpActivity : ComponentActivity() {
   var email by remember { mutableStateOf("") }; var password by remember { mutableStateOf("") }; var name by remember { mutableStateOf("") }
   var code by remember { mutableStateOf("") }
   var link by rememberSaveable { mutableStateOf(incoming) }
-  var privateSource by remember { mutableStateOf(true) }
+  var shareSheetUrl by rememberSaveable { mutableStateOf("") }
+  var shareTags by remember { mutableStateOf(emptySet<String>()) }
+  var shareSaveError by remember { mutableStateOf("") }
   var tags by remember { mutableStateOf(emptySet<String>()) }
   var previousOwner by remember { mutableStateOf<String?>(null) }
   val catalog = remember { MutableStateFlow(CandidateCatalog()) }
@@ -70,14 +84,22 @@ class MvpActivity : ComponentActivity() {
   DisposableEffect(feedScope) { onDispose { feedScope.cancel() } }
   val feedFlow = remember(repo) { PartnerFeed.observe(repo, catalog, feedScope) }
   val feed by feedFlow.collectAsStateWithLifecycle()
-  fun action(block: suspend () -> String) { if (!busy) scope.launch { busy = true; message = ""; try { message = withTimeout(25000) { block() } } catch (e: TimeoutCancellationException) { message = "응답 시간 초과. 연결·권한을 확인하고 상태를 확인한 후 재시도하세요." } catch (e: CancellationException) { throw e } catch (e: Exception) { message = e.userMessage() } finally { busy = false } } }
-  LaunchedEffect(incoming) { if (incoming.isNotBlank()) { link = incoming; page = "취향/공유"; incoming = "" } }
+  fun action(onSuccess: (() -> Unit)? = null, block: suspend () -> String) { if (!busy) scope.launch { busy = true; message = ""; try { val result = withTimeout(25000) { block() }; message = result; onSuccess?.invoke() } catch (e: TimeoutCancellationException) { message = "응답 시간 초과. 연결·권한을 확인하고 상태를 확인한 후 재시도하세요." } catch (e: CancellationException) { throw e } catch (e: Exception) { message = e.userMessage() } finally { busy = false } } }
+  LaunchedEffect(incoming) {
+   if (incoming.isNotBlank()) {
+    link = incoming; page = "취향/공유"; shareSheetUrl = incoming; shareSaveError = ""
+    shareTags = prefs.getStringSet("${real}:${state.user?.uid}:last-share-tags", emptySet()).orEmpty().toSet()
+    incoming = ""
+   }
+  }
+  LaunchedEffect(shareError) { if (shareError != null) shareSheetUrl = "" }
   LaunchedEffect(repo, state.user?.uid) {
    val owner = "${real}:${state.user?.uid}"
-   if (previousOwner != null && !previousOwner!!.endsWith(":null") && previousOwner != owner) { link = ""; incoming = "" }
+   if (previousOwner != null && !previousOwner!!.endsWith(":null") && previousOwner != owner && shareSheetUrl.isBlank()) { link = ""; incoming = "" }
    previousOwner = owner
    password = ""; name = state.user?.name.orEmpty(); code = ""; message = ""
    tags = prefs.getStringSet("$owner:selected-tags", emptySet())!!.toSet()
+   if (shareSheetUrl.isNotBlank()) shareTags = prefs.getStringSet("$owner:last-share-tags", emptySet()).orEmpty().toSet()
    val stored = runCatching { json.decodeFromString<List<Candidate>>(prefs.getString("$owner:catalog", "[]")!!) }.getOrDefault(emptyList())
    catalog.value = CandidateCatalog(state.user?.uid, ReelUrl.candidates.map { url -> stored.find { it.url == url } ?: Candidate(url) })
   }
@@ -94,6 +116,10 @@ class MvpActivity : ComponentActivity() {
    state.error?.let { Text("연결 오류: $it") }
    TextButton(onClick = { play(null) }) { Text("P0-1 독립 재생 검증 열기") }
    if (state.user == null) {
+    if (shareSheetUrl.isNotBlank()) {
+     Text("릴스 링크를 받았어요 💗 로그인하거나 가입하면 내 취향으로 저장할 수 있어요.", color = MaterialTheme.colorScheme.primary)
+     TextButton(onClick = { shareSheetUrl = "" }) { Text("공유 취소") }
+    }
     OutlinedTextField(email, { email = it }, label = { Text("이메일") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("email"))
     OutlinedTextField(password, { password = it }, label = { Text("비밀번호") }, visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth().testTag("password"))
     OutlinedTextField(name, { name = it }, label = { Text("가입 이름") }, singleLine = true, modifier = Modifier.testTag("register-name"))
@@ -127,12 +153,12 @@ class MvpActivity : ComponentActivity() {
       Text("취향 태그 선택")
       tagVocabulary.chunked(3).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) { row.forEach { tag -> FilterChip(selected = tag in tags, onClick = { tags = if (tag in tags) tags - tag else tags + tag; prefs.edit().putStringSet("${real}:${state.user?.uid}:selected-tags", tags).apply() }, label = { Text(tag) }) } } }
       OutlinedTextField(link, { link = it }, label = { Text("공유 Reel URL (태그만 저장할 때 비움)") }, modifier = Modifier.fillMaxWidth().testTag("share-url"))
-      Row { Checkbox(privateSource, { privateSource = it }); Text("비공개 원본 · 파트너 추천에서도 제외", Modifier.padding(top = 12.dp)) }
-      Button(enabled = !busy, onClick = { action { repo.publish(tags, link, privateSource); "최신 취향과 공유 이벤트 저장 완료" } }) { Text("취향/공유 저장") }
+      Text("원본 릴스는 상대에게 공개하지 않아요.", style = MaterialTheme.typography.bodySmall)
+      Button(enabled = !busy, onClick = { action { repo.publish(tags, link, true); "최신 취향과 공유 이벤트 저장 완료" } }) { Text("취향/공유 저장") }
       Text("내 최신 태그: ${state.myTaste.tags.joinToString()}")
      }
      "피드" -> {
-      Text("상대방 최신 태그: ${feed.tags.joinToString().ifEmpty { "아직 없음" }}")
+      Text("서로의 취향을 반영한 릴스", style = MaterialTheme.typography.titleLarge)
       Text("실제 URL 10개 기반. 영상 내용은 자동 분석하지 않습니다. 후보 태그는 사용자가 직접 분류하며 이 기기에 저장됩니다.", style = MaterialTheme.typography.bodySmall)
       when (feed.status) {
        FeedStatus.LOGIN_REQUIRED -> Text("로그인이 필요합니다.")
@@ -175,6 +201,51 @@ class MvpActivity : ComponentActivity() {
       TextButton(enabled = !busy, onClick = { action { repo.unlink(); "연결 해제 완료" } }) { Text("커플 연결 해제") }
       Button(enabled = !busy, onClick = { action { repo.logout(); "로그아웃 완료" } }) { Text("로그아웃") }
      }
+    }
+   }
+  }
+  if (shareSheetUrl.isNotBlank() && state.user != null) {
+   ModalBottomSheet(onDismissRequest = { if (!busy) shareSheetUrl = "" }, containerColor = ivory) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+     Text("♡ CoupleReels", color = blushPink, style = MaterialTheme.typography.titleMedium)
+     Text("릴스 취향에 담기", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+     Text("이 릴스에서 어떤 점이 마음에 들었나요?", style = MaterialTheme.typography.bodyMedium)
+     Card(colors = CardDefaults.cardColors(containerColor = softPink)) {
+      Column(Modifier.fillMaxWidth().padding(14.dp)) {
+       Text("Instagram Reel", fontWeight = FontWeight.SemiBold)
+       Text(shareSheetUrl, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("share-sheet-url"))
+      }
+     }
+     if (state.saved.any { it.url == shareSheetUrl }) Text("이미 담았던 릴스예요. 새로운 취향 태그를 추가할 수 있어요.", color = blushPink, style = MaterialTheme.typography.bodySmall)
+     tagVocabulary.chunked(3).forEach { group ->
+      Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+       group.forEach { tag ->
+        FilterChip(selected = tag in shareTags, onClick = { shareTags = if (tag in shareTags) shareTags - tag else shareTags + tag },
+         label = { Text(tagLabels[tag] ?: tag) })
+       }
+      }
+     }
+     Text("🔒 내가 공유한 원본 링크는 상대방에게 직접 공개되지 않아요.", style = MaterialTheme.typography.bodySmall)
+     Text("태그를 하나 이상 선택하면 앞으로의 추천에 취향이 누적돼요.", style = MaterialTheme.typography.bodySmall)
+     if (shareSaveError.isNotBlank()) Text(shareSaveError, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("share-save-error"))
+     Button(enabled = !busy && shareTags.isNotEmpty(), modifier = Modifier.fillMaxWidth().testTag("share-save"), onClick = {
+      val sharedUrl = shareSheetUrl; val selected = shareTags; val owner = "${real}:${state.user?.uid}"
+      if (!busy) scope.launch {
+       busy = true; shareSaveError = ""
+       try {
+        withTimeout(25000) { repo.publish(selected, sharedUrl, true) }
+        prefs.edit().putStringSet("$owner:last-share-tags", selected).apply()
+        message = "릴스를 내 취향에 반영했어요 💗"
+        shareSheetUrl = ""
+       } catch (e: TimeoutCancellationException) {
+        shareSaveError = "저장 확인이 지연됐어요. 보관함에 저장됐는지 확인해 주세요."
+       } catch (e: CancellationException) { throw e }
+       catch (e: Exception) { shareSaveError = e.userMessage() }
+       finally { busy = false }
+      }
+     }) { Text(if (busy) "저장하는 중…" else "내 취향에 반영하기") }
+     TextButton(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { shareSheetUrl = "" }) { Text("취소") }
+     Spacer(Modifier.height(12.dp))
     }
    }
   }

@@ -38,13 +38,26 @@ class CoupleUiTest {
   val share = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])
   ui.runOnUiThread { androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(ui.activity, share) }; ui.waitForIdle()
   register("b@demo.test", "B")
-  ui.onNodeWithTag("share-url").performScrollTo().assertTextContains(ReelUrl.candidates[0])
+  ui.onNodeWithTag("share-sheet-url").assertTextContains(ReelUrl.candidates[0])
+  click("실버"); click("내 취향에 반영하기")
   click("연결")
   ui.onNodeWithTag("couple-code").performScrollTo().performTextInput(code)
   click("코드로 연결")
   ui.onAllNodesWithText("커플 연결 완료", useUnmergedTree = true)[0].assertExists()
   click("피드")
   ui.runOnUiThread { androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(ui.activity, share) }; ui.waitForIdle()
-  ui.onNodeWithTag("share-url").performScrollTo().assertTextContains(ReelUrl.candidates[0])
+  ui.onNodeWithTag("share-sheet-url").assertTextContains(ReelUrl.candidates[0])
+  ui.onNodeWithText("이미 담았던 릴스예요. 새로운 취향 태그를 추가할 수 있어요.").assertExists()
+ }
+ @Test fun unpairedAccountCanReceiveShareAndSavePrivateTaste() {
+  register("solo@demo.test", "Solo")
+  val share = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[1] + "?igsh=abc")
+  ui.runOnUiThread { androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(ui.activity, share) }; ui.waitForIdle()
+  ui.onNodeWithTag("share-sheet-url").assertTextContains(ReelUrl.candidates[1])
+  ui.onNodeWithTag("share-save").assertIsNotEnabled()
+  click("실버"); click("내 취향에 반영하기")
+  ui.onNodeWithText("릴스를 내 취향에 반영했어요 💗").assertExists()
+  click("저장")
+  ui.onNodeWithText(ReelUrl.candidates[1]).assertExists()
  }
 }

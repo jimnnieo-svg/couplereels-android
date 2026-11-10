@@ -48,7 +48,42 @@ class MvpTest {
  }
  @Test fun unlinkClearsBothFeedsAndOldCodeCannotBeUsed() = runTest {
   val db = FakeBackend(); val a = FakeRepository(db); val b = FakeRepository(db)
-  try { a.register("a@test.local", "pass123", "A"); b.register("b@test.local", "pass123", "B"); val code = a.createCode(); b.join(code); a.publish(setOf("gift"), null, true); b.unlink(); assertNull(a.state.value.coupleId); assertTrue(a.state.value.partnerTaste.tags.isEmpty()); assertTrue(runCatching { a.publish(setOf("date"), null, true) }.isFailure); assertTrue(runCatching { b.join(code) }.isFailure); assertNotEquals(code, a.createCode()) } finally { a.close(); b.close() }
+  try { a.register("a@test.local", "pass123", "A"); b.register("b@test.local", "pass123", "B"); val code = a.createCode(); b.join(code); a.publish(setOf("gift"), null, true); b.unlink(); assertNull(a.state.value.coupleId); assertTrue(a.state.value.partnerTaste.tags.isEmpty()); a.publish(setOf("date"), null, true); assertEquals(setOf("date"), a.state.value.myTaste.tags); assertTrue(b.state.value.partnerTaste.tags.isEmpty()); assertTrue(runCatching { b.join(code) }.isFailure); assertNotEquals(code, a.createCode()) } finally { a.close(); b.close() }
+ }
+ @Test fun unpairedSharesAreSavedPrivatelyAndAppearAfterLinking() = runTest {
+  val db = FakeBackend(); val a = FakeRepository(db); val b = FakeRepository(db)
+  try {
+   a.register("a@test.local", "pass123", "A")
+   a.publish(setOf("silver", "necklace"), urls[0], true)
+   a.publish(setOf("minimal"), urls[0] + "?igsh=tracking", true)
+   assertEquals(setOf("silver", "necklace", "minimal"), a.state.value.myTaste.tags)
+   assertEquals(1, a.state.value.saved.size)
+   assertEquals(setOf("silver", "necklace", "minimal"), a.state.value.saved.first().tags)
+   assertTrue(a.state.value.saved.first().privateSource)
+   assertNull(a.state.value.coupleId)
+   b.register("b@test.local", "pass123", "B")
+   assertTrue(b.state.value.partnerTaste.tags.isEmpty())
+   b.join(a.createCode())
+   assertEquals(setOf("silver", "necklace", "minimal"), b.state.value.partnerTaste.tags)
+   assertEquals(setOf(digest(urls[0])), b.state.value.partnerTaste.excludedIds)
+   assertTrue(b.state.value.saved.isEmpty())
+   assertTrue(RecommendationEngine.rank(b.state.value.partnerTaste, listOf(Candidate(urls[0], setOf("silver")))).isEmpty())
+  } finally { a.close(); b.close() }
+ }
+ @Test fun oldCoupleTasteIsRetainedInPersonalStorageOnUnlink() = runTest {
+  val id = "legacy-user"; val oldCode = "A".repeat(32)
+  val snapshot = FakeSnapshot(
+   accounts = mapOf(id to FakeAccount(Profile(id, "legacy@test.local", "Legacy", oldCode), digest("pass123"))),
+   couples = mapOf(oldCode to Couple(listOf(id))),
+   tastes = mapOf(oldCode to mapOf(id to Taste(setOf("necklace"), setOf(digest(urls[0])))))
+  )
+  val repo = FakeRepository(FakeBackend(snapshot), id)
+  try {
+   repo.unlink()
+   assertNull(repo.state.value.coupleId)
+   assertEquals(setOf("necklace"), repo.state.value.myTaste.tags)
+   assertEquals(setOf(digest(urls[0])), repo.state.value.myTaste.excludedIds)
+  } finally { repo.close() }
  }
  @Test fun savedReelsArePerAccountAndDeduplicated() = runTest {
   val db = FakeBackend(); val a = FakeRepository(db); val b = FakeRepository(db)
