@@ -21,9 +21,14 @@ class ShareAndNavigationTest {
    .putExtra(Intent.EXTRA_TEXT, SpannableString("릴스 보기: ${ReelUrl.candidates[1]}?igsh=123"))
   assertEquals(ReelUrl.candidates[1], ReelIntents.sharedUrl(intent))
  }
- @Test fun profileAndWrongMimeAreNotAcceptedAsReels() {
+ @Test fun imagesWithReelCaptionCanBeSharedButImagesAloneAreNotGuessedAsReels() {
+  val imageWithCaption = Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_TEXT, "릴스: ${ReelUrl.candidates[0]}")
+  assertEquals(ReelUrl.candidates[0], ReelIntents.sharedUrl(imageWithCaption))
+  assertNull(ReelIntents.sharedUrl(Intent(Intent.ACTION_SEND).setType("image/jpeg")))
+ }
+ @Test fun profileAndOtherMimeAreNotAcceptedAsReels() {
   assertNull(ReelIntents.sharedUrl(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "https://www.instagram.com/profile/")))
-  assertNull(ReelIntents.sharedUrl(Intent(Intent.ACTION_SEND).setType("image/jpeg").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])))
+  assertNull(ReelIntents.sharedUrl(Intent(Intent.ACTION_SEND).setType("application/pdf").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])))
  }
  @Test fun recommendationOpensExplicitInternalProbeInsteadOfExternalInstagram() {
   val intent = ReelIntents.playback(ApplicationProvider.getApplicationContext(), ReelUrl.candidates[0] + "?igsh=x")

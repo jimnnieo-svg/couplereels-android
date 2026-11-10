@@ -6,6 +6,8 @@
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
    <!-- Register the installed app in Android Sharesheet for Instagram Reel links. -->
    <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="text/plain"/></intent-filter>
+   <!-- Instagram may send a thumbnail/image alongside the share. We still require a valid Reel URL to save. -->
+   <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="image/*"/></intent-filter>
   </activity>
  </application>
 </manifest>

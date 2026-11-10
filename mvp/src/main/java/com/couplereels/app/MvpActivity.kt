@@ -92,7 +92,7 @@ class MvpActivity : ComponentActivity() {
     incoming = ""
    }
   }
-  LaunchedEffect(shareError) { if (shareError != null) shareSheetUrl = "" }
+  LaunchedEffect(shareError) { if (shareError != null) { shareSheetUrl = ""; page = "취향/공유" } }
   LaunchedEffect(repo, state.user?.uid) {
    val owner = "${real}:${state.user?.uid}"
    if (previousOwner != null && !previousOwner!!.endsWith(":null") && previousOwner != owner && shareSheetUrl.isBlank()) { link = ""; incoming = "" }
