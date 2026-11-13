@@ -57,6 +57,8 @@ P0-4는 ModalBottomSheet 실험 API opt-in 누락으로 `:mvp:compileDebugKotlin
 | 두 Debug APK 및 서명 검증 | **PASS** |
 | P0-1 Lint | **PASS**, 오류 0 / 경고 5 |
 | MVP Lint | **PASS**, 오류 0 / 경고 13 |
+| Android 35 AOSP 설치·기동 | **PASS**. 최초 부팅 대기는 실패했으나 이후 실제 부팅/설치/앱 프로세스/로그인 화면 확인 |
+| 에뮬레이터 전체 사용자 시나리오 | **BLOCKED**. SystemUI ANR, UIAutomator 종료 137, 입력 주입 문자 유실. 가입→공유→연결→저장 완주 미확인 |
 | Galaxy S25+ | **NOT TESTED**, 연결된 실제 기기 없음 |
 | 실제 Firebase 두 폰 동기화 | **NOT TESTED**, google-services.json 및 운영 연결 없음 |
 | 실제 Instagram 영상/소리 | **NOT TESTED**, 자동 테스트/HTTP 응답을 성공으로 간주하지 않음 |
@@ -86,3 +88,27 @@ PURE_JVM=1 GRADLE_BIN=/workspace/tooling/gradle-8.11.1/bin/gradle bash qa/run-lo
 [Galaxy 설치·시연 절차](P0-5-GALAXY-DEMO.md), [개인정보·출시 전 조건](P0-5-SECURITY.md)을 확인하세요.
 현재 결과물은 설치용 로컬 체험 MVP입니다. 운영 서비스 완성/두 기기 실사용/실제 릴스 재생을 검증한 정식 출시본이 아닙니다.
 환경·플랫폼·Firebase 설정이 해결될 때까지 전체 실사용 목표는 미완료입니다.
+
+
+## 에뮬레이터 시도와 후속 UI 보완
+
+`/dev/kvm`이 없어 Google API 35 이미지를 소프트웨어 모드로 시도했지만 시스템 앱 최초 검증이 장시간 지속됐습니다.
+Google 앱 없는 AOSP API 35 이미지로 대안을 시도했습니다. 초기 대기 제한 내에는 부팅하지 못했고
+`adb install -r`도 준비되지 않은 시스템의 `PackageManagerInternal.freeStorage` null 예외로 실패했습니다.
+SystemUI 초기화 진전 후 재시도하여 실제 부팅 완료와 APK 설치를 확인했습니다. 설치된 APK와 호스트 파일의 SHA-256도 대조했습니다.
+앱 프로세스와 로그인 화면이 실제로 표시됐으며 AndroidRuntime 앱 크래시는 관찰되지 않았습니다.
+
+전체 UI 검증은 통과하지 못했습니다. 먼저 **System UI isn't responding** 대화상자가 자동화를 막았고,
+Wait를 선택한 뒤 로그인 화면을 캡처했습니다. 이후 UIAutomator 보조 프로세스가 exit 137로 종료됐습니다.
+캡처한 입력 영역을 이용한 수동 ADB 입력도 문자가 유실돼 유효한 가입 입력을 완성하지 못했습니다.
+이 환경에서는 입력/프레임 처리가 매우 느려 재생 성능이나 전체 실사용성을 판정할 수 없습니다.
+앱 버그가 없다고 단정하지 않으며, 가입 이후 화면/계정 전환/공유/커플 연결의 실제 기기 검증은 남아 있습니다.
+실제 로그인 캡처만 확보했으며 나머지 7개 시안 화면을 실제 기기에서 검증했다고 주장하지 않습니다.
+전용 AVD 데이터와 기존 앱 데이터를 삭제하지 않았습니다.
+
+실제 화면 확인에서 밝은 테마에 상태 표시줄 흰색 아이콘이 표시되는 문제를 발견해 `SystemBarStyle.light`로 보완했습니다.
+탭/온보딩 전환 시 스크롤을 맨 위로 초기화하고, 작은 화면에서 대체 재생 버튼을 줄바꿈했습니다.
+로그인 전 URL 없는 이미지 공유 안내를 표시하고, 공유 취소 시 입력 링크도 비웁니다.
+이 후속 앱 변경을 포함해 회귀/컴파일/Lint/APK 빌드를 다시 통과했습니다.
+`qa/device-smoke.py`는 전용 기기의 두 체험 계정 가입→취향→공유→연결→피드→보관함 경로를 준비했으며,
+실행 시도에서 위 환경 문제로 중단됐습니다. `--skip-install`도 기기 APK 해시가 지정 APK와 일치해야 진행합니다.

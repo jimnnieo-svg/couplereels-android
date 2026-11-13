@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -44,7 +45,7 @@ class MvpActivity : ComponentActivity() {
  private val firestore by lazy { FirebaseFirestore.getInstance().apply { firestoreSettings = FirebaseFirestoreSettings.Builder().setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()).build() } }
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
-  enableEdgeToEdge()
+  enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT))
   if (savedInstanceState == null) receive(intent) else { incoming = savedInstanceState.getString("pendingReel").orEmpty(); shareError = savedInstanceState.getString("shareError") }
   setContent { CoupleTheme { App() } }
  }
@@ -82,12 +83,14 @@ class MvpActivity : ComponentActivity() {
   var initializedOwner by rememberSaveable { mutableStateOf("") }
   var classifyUrl by remember { mutableStateOf<String?>(null) }; var classifyTags by remember { mutableStateOf(emptySet<String>()) }
   val owner = "${real}:${state.user?.uid}"
+  val contentScroll = rememberScrollState()
+  LaunchedEffect(page, step, settings, state.user?.uid) { contentScroll.scrollTo(0) }
   val catalog = remember { MutableStateFlow(CandidateCatalog()) }
   val feedScope = remember(repo) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
   DisposableEffect(feedScope) { onDispose { feedScope.cancel() } }
   val feed by remember(repo) { PartnerFeed.observe(repo, catalog, feedScope) }.collectAsStateWithLifecycle()
   fun action(success: (() -> Unit)? = null, block: suspend () -> String) { if (!busy) scope.launch { busy = true; message = ""; try { message = withTimeout(25000) { block() }; success?.invoke() } catch (e: TimeoutCancellationException) { message = "저장 응답이 지연됐어요. 현재 상태를 확인하고 다시 시도해 주세요." } catch (e: CancellationException) { throw e } catch (e: Exception) { message = e.userMessage() } finally { busy = false } } }
-  fun dismissShare() { sheet = ""; incoming = ""; shareTags = emptySet(); shareSaveError = "" }
+  fun dismissShare() { sheet = ""; incoming = ""; link = ""; shareTags = emptySet(); shareSaveError = "" }
   fun copyLink(value: String) { getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("CoupleReels", value)); message = "복사했어요." }
   LaunchedEffect(incoming) { if (incoming.isNotBlank() && incoming != sheet) { if (state.user == null) previousUid = null; sheet = incoming; link = incoming; shareTags = emptySet(); shareSaveError = ""; page = "취향" } }
   LaunchedEffect(shareError) { if (shareError != null) { dismissShare(); page = "취향" } }
@@ -115,6 +118,7 @@ class MvpActivity : ComponentActivity() {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
      Brand()
      if (!real) Text("이 기기에만 저장 · 기기 간 동기화 없음", style = MaterialTheme.typography.labelMedium, color = muted)
+     if (state.user == null) shareError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
      if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
      if (message.isNotBlank()) Text(message, Modifier.testTag("notice"), style = MaterialTheme.typography.bodySmall)
      state.error?.let { Text("연결을 확인해 주세요: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
@@ -140,7 +144,7 @@ class MvpActivity : ComponentActivity() {
       Heading("발견", "서로의 취향에서 시작하는 작은 발견")
       SoftCard { Text("♡", style = MaterialTheme.typography.displayMedium); Text(when (feed.status) { FeedStatus.PARTNER_REQUIRED -> "연결하면 상대방의 취향을 반영해요"; FeedStatus.TASTE_REQUIRED -> "상대방의 취향을 기다리고 있어요"; FeedStatus.CATALOG_LOADING -> "내 후보를 불러오고 있어요"; else -> "추천할 후보가 아직 없어요" }, style = MaterialTheme.typography.titleLarge); Text("준비된 실제 링크만 보여드려요. 없는 영상을 채우지 않아요."); Primary("우리로 이동") { page = "우리" } }
      }
-    } else Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    } else Column(Modifier.weight(1f).verticalScroll(contentScroll).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
      if (state.user == null) {
       Heading("취향이 만나는 곳", "좋아하는 릴스를 담고, 서로를 더 알아가요")
       if (sheet.isNotBlank()) { Text("릴스 링크를 받았어요. 로그인하면 이어서 저장할 수 있어요."); TextButton(onClick = { dismissShare() }) { Text("공유 취소") } }

@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
 
 /** An explicit, allowed web embed attempt, never a claimed playback success. */
+@OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("SetJavaScriptEnabled")
 @Composable internal fun ReelPreview(url: String, modifier: Modifier, onExternal: () -> Unit, onCopy: () -> Unit) {
  var attempted by remember(url) { mutableStateOf(false) }
@@ -55,6 +56,6 @@ import kotlinx.coroutines.delay
    Text("로그인·공개 범위·Instagram 정책에 따라 앱 안에서 열리지 않을 수 있어요.", style = MaterialTheme.typography.bodySmall)
    Primary("공식 임베드 열기") { attempted = true }
   }
-  Row { TextButton(onClick = onExternal) { Text("Instagram에서 열기") }; TextButton(onClick = onCopy) { Text("링크 복사") }; if (attempted) TextButton(onClick = { attempted = false }) { Text("닫기") } }
+  FlowRow { TextButton(onClick = onExternal) { Text("Instagram에서 열기") }; TextButton(onClick = onCopy) { Text("링크 복사") }; if (attempted) TextButton(onClick = { attempted = false }) { Text("닫기") } }
  }
 }

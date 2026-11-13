@@ -37,10 +37,10 @@ class UiIntegrationTest {
   click("발견"); ui.onNodeWithText("연결하면 상대방의 취향을 반영해요").assertExists()
  }
  @Test fun imageWithoutLinkPromptsManualInputAndCancellationNeverSaves() {
-  register(); click("나중에 할게요")
   val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
   ui.runOnUiThread { instrumentation.callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("image/jpeg")) }; ui.waitForIdle()
   ui.onNodeWithText("릴스 링크를 받지 못했어요. 이미지 내용은 분석하지 않아요. Instagram에서 링크를 복사해 직접 입력해 주세요.").assertExists()
+  register(); click("나중에 할게요")
   ui.runOnUiThread { instrumentation.callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle()
   click("실버")
   ui.activityRule.scenario.recreate(); ui.waitForIdle()
