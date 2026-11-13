@@ -21,7 +21,13 @@ class CoupleUiTest {
   override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("couplereels-demo-v1", Context.MODE_PRIVATE).edit().clear().commit() }
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MvpActivity>()
- private fun click(label: String) { val node = ui.onNodeWithText(label, useUnmergedTree = true); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
+ @org.junit.Before fun rememberScenarioIntent() { scenarioLaunchIntent = Intent(ui.activity.intent) }
+ private lateinit var scenarioLaunchIntent: Intent
+ @org.junit.After fun restoreScenarioIntentMetadata() {
+  if (::scenarioLaunchIntent.isInitialized) ui.runOnUiThread { ui.activity.intent = scenarioLaunchIntent }
+ }
+
+ private fun click(label: String) { val node = if (label in listOf("발견", "취향", "보관함", "우리")) ui.onNodeWithTag("tab-$label") else ui.onNodeWithText(label, useUnmergedTree = true); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
  private fun register(email: String, name: String) {
   ui.onNodeWithTag("email").performScrollTo().performTextReplacement(email)
   ui.onNodeWithTag("password").performScrollTo().performTextInput("test1234")

@@ -13,7 +13,7 @@ fun digest(text: String): String = MessageDigest.getInstance("SHA-256").digest(t
 @Serializable data class SavedReel(val url: String, val tags: Set<String> = emptySet(), val liked: Boolean = false, val privateSource: Boolean = true)
 @Serializable data class Candidate(val url: String, val tags: Set<String> = emptySet())
 data class RankedReel(val candidate: Candidate, val score: Double)
-data class AppData(val user: Profile? = null, val coupleId: String? = null, val members: List<String> = emptyList(), val myTaste: Taste = Taste(), val partnerTaste: Taste = Taste(), val saved: List<SavedReel> = emptyList(), val error: String? = null)
+data class AppData(val user: Profile? = null, val coupleId: String? = null, val members: List<String> = emptyList(), val myTaste: Taste = Taste(), val partnerTaste: Taste = Taste(), val saved: List<SavedReel> = emptyList(), val error: String? = null, val partnerReels: List<String>? = null, val partnerUpdatedAt: Long = 0)
 
 /** Only manually assigned metadata. Empty tags mean unclassified, never inferred video content. */
 object RecommendationEngine {
@@ -40,6 +40,7 @@ interface CoupleRepository {
  suspend fun join(code: String)
  suspend fun unlink()
  suspend fun publish(tags: Set<String>, url: String?, privateSource: Boolean)
+ suspend fun updateCandidateCatalog(candidates: List<Candidate>)
  suspend fun saveRecommendation(url: String)
  suspend fun save(url: String, liked: Boolean)
  suspend fun removeSaved(url: String)
@@ -47,3 +48,13 @@ interface CoupleRepository {
 }
 fun requireTags(tags: Set<String>): Set<String> = cleanTags(tags).also { require(it.isNotEmpty() && it.size == tags.size) { "목록에서 취향 태그를 선택하세요." } }
 fun requireName(name: String): String = name.trim().also { require(it.length in 1..40) { "이름은 1~40자로 입력하세요." } }
+
+/** Only public candidate URLs cross the couple boundary. Never tags, scores or source hashes. */
+object RecommendationProjection {
+ const val MAX_PUBLIC_RESULTS = 5
+ fun urls(taste: Taste, candidates: List<Candidate>): List<String>? =
+  if (taste.tags.isEmpty()) null else RecommendationEngine.rank(taste, candidates, MAX_PUBLIC_RESULTS).map { it.candidate.url }
+ fun catalog(candidates: List<Candidate>): List<Candidate> = candidates.mapNotNull { c ->
+  ReelUrl.normalize(c.url)?.takeIf { it in ReelUrl.candidates }?.let { Candidate(it, cleanTags(c.tags)) }
+ }.groupBy { it.url }.map { (url, entries) -> Candidate(url, entries.flatMap { it.tags }.toSet()) }.take(10)
+}

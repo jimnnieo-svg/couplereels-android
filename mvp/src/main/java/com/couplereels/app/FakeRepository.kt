@@ -8,21 +8,26 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 @Serializable data class FakeAccount(val profile: Profile, val passwordHash: String)
-@Serializable data class FakeSnapshot(val accounts: Map<String, FakeAccount> = emptyMap(), val couples: Map<String, Couple> = emptyMap(), val tastes: Map<String, Map<String, Taste>> = emptyMap(), val saved: Map<String, List<SavedReel>> = emptyMap(), val personalTastes: Map<String, Taste> = emptyMap())
+@Serializable data class FakeSnapshot(val accounts: Map<String, FakeAccount> = emptyMap(), val couples: Map<String, Couple> = emptyMap(), val tastes: Map<String, Map<String, Taste>> = emptyMap(), val saved: Map<String, List<SavedReel>> = emptyMap(), val personalTastes: Map<String, Taste> = emptyMap(), val catalogs: Map<String, List<Candidate>> = emptyMap())
 class FakeBackend(initial: FakeSnapshot = FakeSnapshot(), private val persist: (FakeSnapshot) -> Unit = {}) {
  internal val data = MutableStateFlow(initial)
  private val lock = Mutex()
  internal suspend fun change(action: (FakeSnapshot) -> FakeSnapshot) = lock.withLock { val next = action(data.value); persist(next); data.value = next }
 }
 /** Local-only test implementation; multiple repositories can share one backend in JVM tests. */
-class FakeRepository(private val backend: FakeBackend, initialUid: String? = null, private val persistSession: (String?) -> Unit = {}) : CoupleRepository {
+class FakeRepository(private val backend: FakeBackend, initialUid: String? = null, private val catalogLoader: (String) -> List<Candidate> = { ReelUrl.candidates.map(::Candidate) }, private val persistSession: (String?) -> Unit = {}) : CoupleRepository {
  private val session = MutableStateFlow(initialUid?.takeIf { it in backend.data.value.accounts })
  private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
  override val state = combine(backend.data, session) { db, uid ->
   val user = db.accounts[uid]?.profile
   val c = db.couples[user?.coupleId]?.takeIf { it.active && uid in it.members }
   val cid = user?.coupleId?.takeIf { c != null }
-  AppData(user, cid, c?.members.orEmpty(), db.tastes[cid]?.get(uid) ?: db.personalTastes[uid] ?: Taste(), db.tastes[cid]?.filterKeys { it != uid }?.values?.firstOrNull() ?: Taste(), db.saved[uid].orEmpty())
+  val partner = c?.members?.singleOrNull { it != uid }
+  val own = db.personalTastes[uid] ?: db.tastes[cid]?.get(uid) ?: Taste()
+  // FakeBackend simulates server-private storage; only projection enters the client state.
+  val privatePartner = db.personalTastes[partner] ?: db.tastes[cid]?.get(partner) ?: Taste()
+  val projection = partner?.let { RecommendationProjection.urls(privatePartner, db.catalogs[it] ?: RecommendationProjection.catalog(catalogLoader(it))) }
+  AppData(user, cid, c?.members.orEmpty(), own, Taste(), db.saved[uid].orEmpty(), partnerReels = projection, partnerUpdatedAt = if (partner == null) 0 else privatePartner.updatedAt)
  }.stateIn(scope, SharingStarted.Eagerly, AppData())
  private fun uid() = session.value ?: error("로그인이 필요합니다.")
  private fun setSession(uid: String?) { persistSession(uid); session.value = uid }
@@ -42,9 +47,9 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
   val id = uid(); val code = UUID.randomUUID().toString().replace("-", "").uppercase()
   backend.change { db ->
    val a = db.accounts.getValue(id); require(db.couples[a.profile.coupleId]?.active != true) { "기존 연결을 먼저 해제하세요." }
-   val ownTaste = db.personalTastes[id]
+   val ownTaste = db.personalTastes[id] ?: db.tastes[a.profile.coupleId]?.get(id)
    db.copy(couples = db.couples + (code to Couple(listOf(id))), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = code))),
-    tastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.tastes + (code to (db.tastes[code].orEmpty() + (id to ownTaste))) else db.tastes)
+    personalTastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.personalTastes + (id to ownTaste) else db.personalTastes)
   }
   return code
  }
@@ -54,9 +59,9 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
    val a = db.accounts.getValue(id); require(db.couples[a.profile.coupleId]?.active != true) { "기존 연결을 먼저 해제하세요." }
    val c = db.couples[key] ?: error("연결 코드를 확인하세요.")
    require(c.active && c.members.size == 1 && id !in c.members) { "사용할 수 없는 코드입니다." }
-   val ownTaste = db.personalTastes[id]
+   val ownTaste = db.personalTastes[id] ?: db.tastes[a.profile.coupleId]?.get(id)
    db.copy(couples = db.couples + (key to c.copy(members = c.members + id)), accounts = db.accounts + (id to a.copy(profile = a.profile.copy(coupleId = key))),
-    tastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.tastes + (key to (db.tastes[key].orEmpty() + (id to ownTaste))) else db.tastes)
+    personalTastes = if (ownTaste != null && ownTaste.tags.isNotEmpty()) db.personalTastes + (id to ownTaste) else db.personalTastes)
   }
  }
  override suspend fun unlink() {
@@ -81,8 +86,12 @@ class FakeRepository(private val backend: FakeBackend, initialUid: String? = nul
     db.saved + (id to (db.saved[id].orEmpty().filterNot { it.url == normalized } + SavedReel(normalized, existing?.tags.orEmpty() + t, liked = existing?.liked ?: false, privateSource = privateSource)))
    } else db.saved
    db.copy(personalTastes = db.personalTastes + (id to taste),
-    tastes = if (cid != null) db.tastes + (cid to (db.tastes[cid].orEmpty() + (id to taste))) else db.tastes, saved = saved)
+    saved = saved)
   }
+ }
+ override suspend fun updateCandidateCatalog(candidates: List<Candidate>) {
+  val id = uid(); val safe = RecommendationProjection.catalog(candidates)
+  backend.change { it.copy(catalogs = it.catalogs + (id to safe)) }
  }
  override suspend fun saveRecommendation(url: String) {
   val valid = ReelUrl.normalize(url) ?: error("Reel URL 오류"); val id = uid()

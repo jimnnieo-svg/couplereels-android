@@ -40,7 +40,7 @@ service cloud.firestore {
    }
   }
   match /couples/{cid} {
-   // High-entropy 128-bit bearer invite. Nonmembers may GET an unclaimed code, never list couples.
+   // 32-hex UUID bearer invite (about 122 random bits). Nonmembers may GET an unclaimed code, never list couples.
    allow get: if signed() && (request.auth.uid in resource.data.members || (resource.data.active && resource.data.members.size() == 1 && free()));
    allow list: if false;
    allow create: if signed() && cid.matches('[A-F0-9]{32}') && request.resource.data.keys().hasOnly(['members','active']) && request.resource.data.members == [request.auth.uid] && request.resource.data.active == true && free() && getAfter(profile(request.auth.uid)).data.coupleId == cid;
@@ -48,15 +48,30 @@ service cloud.firestore {
     ((request.auth.uid in resource.data.members && request.resource.data.members == resource.data.members && request.resource.data.active == false) ||
      (resource.data.members.size() == 1 && !(request.auth.uid in resource.data.members) && free() && request.resource.data.active == true && request.resource.data.members == resource.data.members.concat([request.auth.uid]) && getAfter(profile(request.auth.uid)).data.coupleId == cid));
    allow delete: if false;
+   // Legacy private inputs are retained for the author to migrate, never read by the partner.
    match /tastes/{uid} {
-    allow read: if activeMember(cid);
-    allow create, update: if owner(uid) && activeMember(cid) && request.resource.data.keys().hasOnly(['tags','excludedIds','updatedAt']) && tags(request.resource.data.tags) && request.resource.data.tags.size() > 0 && request.resource.data.excludedIds is list && request.resource.data.excludedIds.size() <= 100 && request.resource.data.updatedAt == request.time && (!exists(/databases/$(database)/documents/couples/$(cid)/tastes/$(uid)) || request.resource.data.excludedIds.hasAll(resource.data.excludedIds));
-    allow delete: if false;
+    allow read: if owner(uid);
+    allow write: if false;
    }
    match /events/{id} {
+    allow read: if signed() && resource.data.authorId == request.auth.uid;
+    allow write: if false;
+   }
+   // Output-only projection: the author computes ranking and exclusions privately.
+   match /recommendations/{uid} {
     allow read: if activeMember(cid);
-    allow create: if activeMember(cid) && request.resource.data.keys().hasOnly(['authorId','tags','updatedAt']) && request.resource.data.authorId == request.auth.uid && tags(request.resource.data.tags) && request.resource.data.tags.size() > 0 && request.resource.data.updatedAt == request.time;
-    allow update, delete: if false;
+    allow create, update: if owner(uid) && activeMember(cid) &&
+     request.resource.data.keys().hasOnly(['urls','updatedAt']) &&
+     request.resource.data.urls is list && request.resource.data.urls.size() <= 5 &&
+     request.resource.data.urls.toSet().size() == request.resource.data.urls.size() &&
+     request.resource.data.urls.hasOnly([
+      'https://www.instagram.com/reel/DUnumljCZlg/', 'https://www.instagram.com/reel/DR3TZi2CWO8/',
+      'https://www.instagram.com/reel/DRhhirTETMB/', 'https://www.instagram.com/reel/DRhok9lifwC/',
+      'https://www.instagram.com/reel/De9clQliESh/', 'https://www.instagram.com/reel/De4TkzwiTcr/',
+      'https://www.instagram.com/reel/DejsrpGCZ1O/', 'https://www.instagram.com/reel/DbyBqWBiLjA/',
+      'https://www.instagram.com/reel/DdRTGfjibIj/', 'https://www.instagram.com/reel/DdeLa8Uiuck/'
+     ]) && request.resource.data.updatedAt == request.time;
+    allow delete: if owner(uid) && activeMember(cid);
    }
   }
   match /{document=**} { allow read, write: if false; }

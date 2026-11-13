@@ -17,11 +17,45 @@ test('01b unpaired user can save their own private tastes but nobody else can re
  await assertFails(setDoc(ref,{tags:['date'],excludedIds:['secret-hash'],url:'https://www.instagram.com/reel/secret/',updatedAt:serverTimestamp()}));
 });
 test('02 joining must update own profile in same commit',async()=>{await assertFails(updateDoc(doc(b,'couples',code),{members:['a','b']}));const batch=writeBatch(b);batch.update(doc(b,'couples',code),{members:['a','b']});batch.update(doc(b,'users','b'),{coupleId:code});await assertSucceeds(batch.commit());});
-test('03 partner receives tags but cannot read original URLs or profile',async()=>{await assertSucceeds(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['silver'],excludedIds:['hash'],updatedAt:serverTimestamp()}));await assertSucceeds(getDoc(doc(b,'couples',code,'tastes','a')));await setDoc(doc(a,'users','a','saved','original'),{url:'https://www.instagram.com/reel/DUnumljCZlg/',tags:['silver'],liked:false,privateSource:true});await assertFails(getDoc(doc(b,'users','a','saved','original')));await assertFails(getDoc(doc(b,'users','a')));});
+test('03 partner receives only projected public URLs, never private inputs',async()=>{
+ await env.withSecurityRulesDisabled(async ctx=>{
+  await setDoc(doc(ctx.firestore(),'couples',code,'tastes','a'),{tags:['silver'],excludedIds:['legacy-hash'],updatedAt:new Date()});
+  await setDoc(doc(ctx.firestore(),'couples',code,'events','legacy-event'),{authorId:'a',tags:['silver'],updatedAt:new Date()});
+ });
+ const projection=doc(a,'couples',code,'recommendations','a');
+ await assertSucceeds(setDoc(projection,{urls:['https://www.instagram.com/reel/DR3TZi2CWO8/'],updatedAt:serverTimestamp()}));
+ const result=await assertSucceeds(getDoc(doc(b,'couples',code,'recommendations','a')));
+ if(JSON.stringify(Object.keys(result.data()).sort())!==JSON.stringify(['updatedAt','urls']))throw new Error('Private fields leaked');
+ await assertFails(getDoc(doc(b,'couples',code,'tastes','a')));
+ await assertFails(getDoc(doc(b,'couples',code,'events','legacy-event')));
+ await assertSucceeds(getDoc(doc(a,'couples',code,'tastes','a')));
+ await setDoc(doc(a,'users','a','saved','original'),{url:'https://www.instagram.com/reel/DUnumljCZlg/',tags:['silver'],liked:false,privateSource:true});
+ await assertFails(getDoc(doc(b,'users','a','saved','original')));await assertFails(getDoc(doc(b,'users','a')));
+});
 test('04 another couple cannot read or write first couple data',async()=>{const batch=writeBatch(c);batch.set(doc(c,'couples',other),{members:['c'],active:true});batch.update(doc(c,'users','c'),{coupleId:other});await batch.commit();const join=writeBatch(d);join.update(doc(d,'couples',other),{members:['c','d']});join.update(doc(d,'users','d'),{coupleId:other});await join.commit();await assertFails(getDoc(doc(c,'couples',code)));await assertFails(getDocs(collection(c,'couples',code,'tastes')));await assertFails(setDoc(doc(c,'couples',code,'tastes','a'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));});
 test('05 cannot forge partner tastes, inject URL into shared data, or join a full couple',async()=>{await assertFails(setDoc(doc(b,'couples',code,'tastes','a'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['gift'],excludedIds:['hash'],updatedAt:serverTimestamp(),url:'secret'}));await assertFails(updateDoc(doc(c,'couples',code),{members:['a','b','c']}));await assertFails(updateDoc(doc(c,'users','c'),{coupleId:code}));});
-test('06a invalid tags and removal of private exclusions are denied',async()=>{await assertFails(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['unknown'],excludedIds:['hash'],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['silver'],excludedIds:[],updatedAt:serverTimestamp()}));});
-test('06b event author forgery, original URL injection and event editing are denied',async()=>{const ref=doc(a,'couples',code,'events','event-a');await assertSucceeds(setDoc(ref,{authorId:'a',tags:['silver'],updatedAt:serverTimestamp()}));await assertSucceeds(getDoc(doc(b,'couples',code,'events','event-a')));await assertFails(setDoc(doc(b,'couples',code,'events','forged'),{authorId:'a',tags:['date'],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'events','url'),{authorId:'a',tags:['date'],updatedAt:serverTimestamp(),url:'secret'}));await assertFails(updateDoc(ref,{tags:['date'],updatedAt:serverTimestamp()}));});
+test('06a legacy private taste writes and private-field projections are denied',async()=>{await assertFails(setDoc(doc(a,'couples',code,'tastes','a'),{tags:['silver'],excludedIds:['hash'],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'recommendations','a'),{urls:[],tags:['silver'],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'recommendations','a'),{urls:[],excludedIds:['hash'],updatedAt:serverTimestamp()}));});
+test('06b event author forgery, original URL injection and event editing are denied',async()=>{const ref=doc(a,'couples',code,'events','event-a');await assertFails(setDoc(ref,{authorId:'a',tags:['silver'],updatedAt:serverTimestamp()}));await assertFails(getDoc(doc(b,'couples',code,'events','event-a')));await assertFails(setDoc(doc(b,'couples',code,'events','forged'),{authorId:'a',tags:['date'],updatedAt:serverTimestamp()}));await assertFails(setDoc(doc(a,'couples',code,'events','url'),{authorId:'a',tags:['date'],updatedAt:serverTimestamp(),url:'secret'}));await assertFails(updateDoc(ref,{tags:['date'],updatedAt:serverTimestamp()}));});
 test('06c unlinking only profile while couple is active is denied',async()=>{await assertFails(updateDoc(doc(b,'users','b'),{coupleId:null}));});
 test('06 unauthenticated access denied',async()=>{await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(),'couples',code,'tastes','a')));});
-test('07 unlink immediately denies shared reads/writes and prevents reactivation',async()=>{await assertSucceeds(updateDoc(doc(a,'couples',code),{active:false}));await assertFails(getDoc(doc(b,'couples',code,'tastes','a')));await assertFails(setDoc(doc(b,'couples',code,'tastes','b'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));await assertFails(updateDoc(doc(b,'couples',code),{active:true}));await assertSucceeds(updateDoc(doc(b,'users','b'),{coupleId:null}));});
+test('07 unlink immediately denies shared reads/writes and prevents reactivation',async()=>{await assertSucceeds(updateDoc(doc(a,'couples',code),{active:false}));await assertFails(getDoc(doc(b,'couples',code,'recommendations','a')));await assertFails(getDoc(doc(b,'couples',code,'tastes','a')));await assertFails(setDoc(doc(b,'couples',code,'tastes','b'),{tags:['gift'],excludedIds:[],updatedAt:serverTimestamp()}));await assertFails(updateDoc(doc(b,'couples',code),{active:true}));await assertSucceeds(updateDoc(doc(b,'users','b'),{coupleId:null}));});
+
+test('08 projected list rejects duplicates, arbitrary URLs, third-party writes and stale timestamps',async()=>{
+ const batch=writeBatch(c);batch.update(doc(c,'couples',other),{active:false});await batch.commit();
+ const next='D'.repeat(32), create=writeBatch(c);create.set(doc(c,'couples',next),{members:['c'],active:true});create.update(doc(c,'users','c'),{coupleId:next});await create.commit();
+ const ref=doc(c,'couples',next,'recommendations','c'), url='https://www.instagram.com/reel/DR3TZi2CWO8/';
+ await assertFails(setDoc(ref,{urls:[url,url],updatedAt:serverTimestamp()}));
+ const tooMany=['DUnumljCZlg','DR3TZi2CWO8','DRhhirTETMB','DRhok9lifwC','De9clQliESh','De4TkzwiTcr'].map(id=>'https://www.instagram.com/reel/'+id+'/');
+ await assertFails(setDoc(ref,{urls:tooMany,updatedAt:serverTimestamp()}));
+ await assertFails(setDoc(ref,{urls:['https://evil.example/reel/x/'],updatedAt:serverTimestamp()}));
+ await assertFails(setDoc(ref,{urls:[url],updatedAt:new Date(0)}));
+ await assertFails(setDoc(doc(d,'couples',next,'recommendations','c'),{urls:[url],updatedAt:serverTimestamp()}));
+ await assertSucceeds(setDoc(ref,{urls:[url],updatedAt:serverTimestamp()}));
+ await assertFails(getDoc(doc(a,'couples',next,'recommendations','c')));
+});
+test('09 new design tags remain owner-private and bounded',async()=>{
+ const ref=doc(d,'users','d','preferences','taste');
+ await assertSucceeds(setDoc(ref,{tags:['gold','flowers','anniversary','gift'],excludedIds:[],updatedAt:serverTimestamp()}));
+ await assertFails(getDoc(doc(c,'users','d','preferences','taste')));
+ await assertFails(setDoc(ref,{tags:['gold','not-valid'],excludedIds:[],updatedAt:serverTimestamp()}));
+});

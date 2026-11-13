@@ -19,6 +19,8 @@ class P05RegressionTest {
    val aUid = a.state.value.user!!.uid
    val bUid = b.state.value.user!!.uid
    val originalA = ReelUrl.candidates[0]; val originalB = ReelUrl.candidates[1]; val candidate = ReelUrl.candidates[2]
+   a.updateCandidateCatalog(listOf(Candidate(originalA, setOf("perfume")), Candidate(candidate, setOf("perfume"))))
+   b.updateCandidateCatalog(listOf(Candidate(originalB, setOf("flowers")), Candidate(candidate, setOf("flowers"))))
    a.publish(setOf("perfume", "minimal"), originalA, true)
    b.publish(setOf("flowers", "gold"), originalB, true)
    b.join(a.createCode())

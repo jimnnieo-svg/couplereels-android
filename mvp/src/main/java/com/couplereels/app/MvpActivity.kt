@@ -45,7 +45,7 @@ class MvpActivity : ComponentActivity() {
  private val firestore by lazy { FirebaseFirestore.getInstance().apply { firestoreSettings = FirebaseFirestoreSettings.Builder().setLocalCacheSettings(MemoryCacheSettings.newBuilder().build()).build() } }
  override fun onCreate(savedInstanceState: Bundle?) {
   super.onCreate(savedInstanceState)
-  enableEdgeToEdge(statusBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT))
+  enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT), navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
   if (savedInstanceState == null) receive(intent) else { incoming = savedInstanceState.getString("pendingReel").orEmpty(); shareError = savedInstanceState.getString("shareError") }
   setContent { CoupleTheme { App() } }
  }
@@ -67,7 +67,11 @@ class MvpActivity : ComponentActivity() {
  @OptIn(ExperimentalMaterial3Api::class)
  @Composable private fun App() {
   var real by remember { mutableStateOf(firebaseAvailable && prefs.getBoolean("useFirebase", true)) }
-  val repo: CoupleRepository = remember(real) { if (real) FirebaseRepository(FirebaseAuth.getInstance(), firestore) else FakeRepository(backend, prefs.getString("session", null)) { check(prefs.edit().putString("session", it).commit()) { "로그인 상태를 저장하지 못했어요." } } }
+  val repo: CoupleRepository = remember(real) { if (real) FirebaseRepository(FirebaseAuth.getInstance(), firestore) { uid ->
+   runCatching { json.decodeFromString<List<Candidate>>(prefs.getString("true:$uid:catalog", "[]")!!) }.getOrDefault(emptyList()).ifEmpty { ReelUrl.candidates.map(::Candidate) }
+  } else FakeRepository(backend, prefs.getString("session", null), catalogLoader = { uid ->
+   runCatching { json.decodeFromString<List<Candidate>>(prefs.getString("false:$uid:catalog", "[]")!!) }.getOrDefault(emptyList()).ifEmpty { ReelUrl.candidates.map(::Candidate) }
+  }) { check(prefs.edit().putString("session", it).commit()) { "로그인 상태를 저장하지 못했어요." } } }
   DisposableEffect(repo) { onDispose { repo.close() } }
   val state by repo.state.collectAsStateWithLifecycle()
   val scope = rememberCoroutineScope()
@@ -109,12 +113,12 @@ class MvpActivity : ComponentActivity() {
    catalog.value = CandidateCatalog(uid, ReelUrl.candidates.map { u -> stored.find { it.url == u } ?: Candidate(u) })
   }
   LaunchedEffect(state.myTaste) { if (step == 0) tags = state.myTaste.tags }
-  Scaffold(containerColor = cream, bottomBar = {
-   if (state.user != null && step == 0) NavigationBar(containerColor = cream) {
-    listOf("발견" to "⌂", "취향" to "♡", "보관함" to "▱", "우리" to "♧").forEach { (tab, icon) -> NavigationBarItem(selected = page == tab, onClick = { page = tab; settings = false }, icon = { Text(icon, style = MaterialTheme.typography.headlineSmall) }, label = { Text(tab) }, colors = NavigationBarItemDefaults.colors(indicatorColor = baby)) }
+  Scaffold(containerColor = burgundyBackground, bottomBar = {
+   if (state.user != null && step == 0) NavigationBar(containerColor = burgundyBackground) {
+    listOf("발견" to "⌂", "취향" to "♡", "보관함" to "▱", "우리" to "♧").forEach { (tab, icon) -> NavigationBarItem(modifier = Modifier.testTag("tab-$tab"), selected = page == tab, onClick = { page = tab; settings = false }, icon = { Text(icon, style = MaterialTheme.typography.headlineSmall) }, label = { Text(tab) }, colors = NavigationBarItemDefaults.colors(indicatorColor = burgundySurface)) }
    }
   }) { insets ->
-   Column(Modifier.fillMaxSize().padding(insets).imePadding().background(Brush.verticalGradient(listOf(cream, baby.copy(alpha = .3f))))) {
+   Column(Modifier.fillMaxSize().padding(insets).imePadding().background(Brush.verticalGradient(listOf(burgundyBackground, burgundySurface.copy(alpha = .3f))))) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
      Brand()
      if (!real) Text("이 기기에만 저장 · 기기 간 동기화 없음", style = MaterialTheme.typography.labelMedium, color = muted)
@@ -134,7 +138,7 @@ class MvpActivity : ComponentActivity() {
         Text(if (candidate.tags.isEmpty()) "아직 분류되지 않은 후보" else candidate.tags.joinToString(" · ") { labels[it] ?: it }, style = MaterialTheme.typography.bodySmall)
         TextButton(onClick = { classifyUrl = candidate.url; classifyTags = candidate.tags }) { Text("후보 태그 편집") }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-         Button(colors = ButtonDefaults.buttonColors(containerColor = pink, contentColor = ink), enabled = !busy, onClick = { action { repo.saveRecommendation(candidate.url); "보관함에 저장했어요." } }, modifier = Modifier.weight(1f)) { Text(if (state.saved.any { it.url == candidate.url }) "저장됨" else "저장") }
+         Button(colors = ButtonDefaults.buttonColors(containerColor = goldAccent, contentColor = burgundyBackground), enabled = !busy, onClick = { action { repo.saveRecommendation(candidate.url); "보관함에 저장했어요." } }, modifier = Modifier.weight(1f)) { Text(if (state.saved.any { it.url == candidate.url }) "저장됨" else "저장") }
          OutlinedButton(enabled = !busy, onClick = { action { repo.save(candidate.url, state.saved.none { it.url == candidate.url && it.liked }); "관심 상태를 변경했어요." } }) { Text(if (state.saved.any { it.url == candidate.url && it.liked }) "♥ 관심 해제" else "♡ 관심") }
         }
         Text("등록된 후보와 수동 태그 기반 추천이에요. Instagram 전체 검색이 아니에요.", style = MaterialTheme.typography.labelSmall, color = muted)
@@ -142,7 +146,7 @@ class MvpActivity : ComponentActivity() {
       }
      } else Column(Modifier.weight(1f).padding(20.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
       Heading("발견", "서로의 취향에서 시작하는 작은 발견")
-      SoftCard { Text("♡", style = MaterialTheme.typography.displayMedium); Text(when (feed.status) { FeedStatus.PARTNER_REQUIRED -> "연결하면 상대방의 취향을 반영해요"; FeedStatus.TASTE_REQUIRED -> "상대방의 취향을 기다리고 있어요"; FeedStatus.CATALOG_LOADING -> "내 후보를 불러오고 있어요"; else -> "추천할 후보가 아직 없어요" }, style = MaterialTheme.typography.titleLarge); Text("준비된 실제 링크만 보여드려요. 없는 영상을 채우지 않아요."); Primary("우리로 이동") { page = "우리" } }
+      SoftCard { Text("♡", style = MaterialTheme.typography.displayMedium); Text(when (feed.status) { FeedStatus.PARTNER_REQUIRED -> "연결하면 상대방의 취향을 반영해요"; FeedStatus.TASTE_REQUIRED -> "상대방의 추천 준비를 기다리고 있어요"; FeedStatus.CATALOG_LOADING -> "내 후보를 불러오고 있어요"; else -> "추천할 후보가 아직 없어요" }, style = MaterialTheme.typography.titleLarge); Text("준비된 실제 링크만 보여드려요. 없는 영상을 채우지 않아요."); Primary("우리로 이동") { page = "우리" } }
      }
     } else Column(Modifier.weight(1f).verticalScroll(contentScroll).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
      if (state.user == null) {
@@ -158,7 +162,7 @@ class MvpActivity : ComponentActivity() {
       }
      } else if (step > 0) {
       Text("취향 알아보기 $step/2", color = muted)
-      LinearProgressIndicator(progress = { step / 2f }, modifier = Modifier.fillMaxWidth(), color = pink, trackColor = baby)
+      LinearProgressIndicator(progress = { step / 2f }, modifier = Modifier.fillMaxWidth(), color = goldAccent, trackColor = burgundySurface)
       Heading(if (step == 1) "어떤 걸 좋아하세요?" else "어떤 스타일이 좋아요?", if (step == 1) "관심 있는 주제를 골라주세요" else "세부 취향과 받고 싶은 선물을 알려주세요")
       if (step == 1) { ChoiceGrid(interests, tags) { tags = tags.toggle(it) } }
       else { Text("선호 스타일", fontWeight = FontWeight.Bold); ChoiceGrid(styles, tags) { tags = tags.toggle(it) }; Text("선물로 받고 싶은 것 (선택)", fontWeight = FontWeight.Bold); Tags(gifts, tags) { tags = tags.toggle(it) } }
@@ -201,7 +205,7 @@ class MvpActivity : ComponentActivity() {
        SoftCard {
         Text("◯  ♡  ◯", Modifier.align(Alignment.CenterHorizontally), style = MaterialTheme.typography.displaySmall)
         Text(if (state.members.size == 2) "커플 연결 완료" else if (state.coupleId != null) "상대방 연결 대기" else "아직 연결된 연인이 없어요", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(if (real) "연결하면 서로의 취향 태그가 추천 피드에 반영돼요." else "로컬 연결은 이 기기의 체험 계정끼리만 가능해요.")
+        Text(if (real) "연결하면 취향 태그 공개 없이 계산된 후보 링크를 서로 전달해요." else "로컬 연결은 이 기기의 체험 계정끼리만 가능해요.")
         TextButton(onClick = { page = "취향" }) { Text("나중에 연결할게요") }
        }
        SoftCard {
@@ -223,12 +227,13 @@ class MvpActivity : ComponentActivity() {
     }
    }
   }
-  if (sheet.isNotBlank() && state.user != null && (previousUid == null || previousUid == state.user?.uid)) ModalBottomSheet(onDismissRequest = { if (!busy) dismissShare() }, containerColor = cream) {
+  if (sheet.isNotBlank() && state.user != null && (previousUid == null || previousUid == state.user?.uid)) ModalBottomSheet(onDismissRequest = { if (!busy) dismissShare() }, containerColor = burgundyBackground, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+   DarkSheetSystemBars()
    Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Brand(); Heading("릴스 취향에 담기", "이 릴스에서 어떤 점이 좋았나요?")
     SoftCard { Text("Instagram Reel", fontWeight = FontWeight.Bold); Text(sheet, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("share-sheet-url")) }
     if (state.saved.any { it.url == sheet }) Text("이미 담았던 릴스예요. 새로운 취향 태그를 추가할 수 있어요.")
-    Tags(tagVocabulary, shareTags, !busy) { shareTags = shareTags.toggle(it) }
+    Tags(tagVocabulary, shareTags, !busy, testTagPrefix = "share") { shareTags = shareTags.toggle(it) }
     PrivacyNote()
     if (shareSaveError.isNotBlank()) Text(shareSaveError, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("share-save-error"))
     Primary(if (busy) "저장하는 중…" else "내 취향에 반영하기", !busy && shareTags.isNotEmpty(), Modifier.testTag("share-save")) {
@@ -238,14 +243,15 @@ class MvpActivity : ComponentActivity() {
     TextButton(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { dismissShare() }) { Text("취소") }
    }
   }
-  classifyUrl?.let { target -> AlertDialog(onDismissRequest = { classifyUrl = null }, title = { Text("후보 태그 편집") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text("영상 내용을 직접 확인하고 분류해 주세요. 이 기기에만 저장돼요."); Text(target, style = MaterialTheme.typography.bodySmall); Tags(tagVocabulary, classifyTags) { classifyTags = classifyTags.toggle(it) } } }, confirmButton = { TextButton(onClick = { catalog.value = CandidateCatalog(state.user?.uid, catalog.value.items.map { if (it.url == target) it.copy(tags = classifyTags) else it }); prefs.edit().putString("$owner:catalog", json.encodeToString(catalog.value.items)).apply(); classifyUrl = null; message = "후보 태그를 저장했어요." }) { Text("분류 저장") } }, dismissButton = { TextButton(onClick = { classifyUrl = null }) { Text("취소") } }) }
+  classifyUrl?.let { target -> AlertDialog(onDismissRequest = { classifyUrl = null }, title = { Text("후보 태그 편집") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text("직접 확인한 후보를 분류하면 내 취향에 맞춰 연인에게 보낼 추천이 갱신돼요."); Text(target, style = MaterialTheme.typography.bodySmall); Tags(tagVocabulary, classifyTags) { classifyTags = classifyTags.toggle(it) } } }, confirmButton = { TextButton(onClick = { val updated = catalog.value.items.map { if (it.url == target) it.copy(tags = classifyTags) else it }
+    action(success = { catalog.value = CandidateCatalog(state.user?.uid, updated); prefs.edit().putString("$owner:catalog", json.encodeToString(updated)).apply(); classifyUrl = null }) { repo.updateCandidateCatalog(updated); "내 후보 분류와 연인에게 보낼 추천을 저장했어요." } }) { Text("분류 저장") } }, dismissButton = { TextButton(onClick = { classifyUrl = null }) { Text("취소") } }) }
   if (unlinkConfirm) AlertDialog(onDismissRequest = { unlinkConfirm = false }, title = { Text("커플 연결을 해제할까요?") }, text = { Text("서로의 추천 정보 접근이 종료돼요. 내 취향과 보관함은 유지돼요.") }, confirmButton = { TextButton(enabled = !busy, onClick = { unlinkConfirm = false; action { repo.unlink(); "연결을 해제했어요." } }) { Text("연결 해제") } }, dismissButton = { TextButton(onClick = { unlinkConfirm = false }) { Text("취소") } })
   if (diagnostics && BuildConfig.DEBUG) AlertDialog(onDismissRequest = { diagnostics = false }, title = { Text("개발 진단") }, text = { Column { Text(if (real) "Firebase 선택됨 · 실제 동기화 검증 별도 필요" else "로컬 체험 · 서버 동기화 없음"); if (firebaseAvailable) TextButton(enabled = !busy, onClick = { diagnostics = false; dismissShare(); real = !real; prefs.edit().putBoolean("useFirebase", real).apply() }) { Text("저장 모드 전환") }; TextButton(onClick = { startActivity(ReelIntents.playback(this@MvpActivity, null)) }) { Text("P0-1 독립 재생 검증 열기") } } }, confirmButton = { TextButton(onClick = { diagnostics = false }) { Text("닫기") } })
  }
 }
 private fun Set<String>.toggle(tag: String) = if (tag in this) this - tag else this + tag
 @Composable private fun ChoiceGrid(values: List<String>, selected: Set<String>, onToggle: (String) -> Unit) {
- values.chunked(2).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { tag -> OutlinedButton(onClick = { onToggle(tag) }, modifier = Modifier.weight(1f).heightIn(min = 86.dp), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (tag in selected) baby else cream, contentColor = ink)) { Text((if (tag in selected) "✓  " else "") + labels.getValue(tag), fontWeight = FontWeight.SemiBold) } } } }
+ values.chunked(2).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { tag -> OutlinedButton(onClick = { onToggle(tag) }, modifier = Modifier.weight(1f).heightIn(min = 86.dp), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (tag in selected) burgundySurface else burgundyBackground, contentColor = ivoryText)) { Text((if (tag in selected) "✓  " else "") + labels.getValue(tag), fontWeight = FontWeight.SemiBold) } } } }
 }
 @Composable private fun SavedCard(item: SavedReel, enabled: Boolean, onOpen: () -> Unit, onLike: () -> Unit, onRemove: () -> Unit) {
  SoftCard {

@@ -8,7 +8,7 @@ plugins {
 android {
  namespace = "com.couplereels.mvp"
  compileSdk = 35
- defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 5; versionName = "0.5-ui-integration" }
+ defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 6; versionName = "0.6-private-projections"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
  testOptions { unitTests.isIncludeAndroidResources = true }
  buildFeatures { compose = true; buildConfig = true }
  sourceSets { getByName("main") { java.srcDir("../app/src/main/java"); res.srcDir("../app/src/main/res") }; getByName("test").java.srcDir("../app/src/test/java") }
@@ -29,6 +29,12 @@ dependencies {
  implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
  implementation("com.google.firebase:firebase-auth")
  implementation("com.google.firebase:firebase-firestore")
+ androidTestImplementation(platform("androidx.compose:compose-bom:2025.02.00"))
+ androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+ androidTestImplementation("androidx.test:runner:1.6.2")
+ androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+ androidTestImplementation("androidx.test.espresso:espresso-intents:3.6.1")
+ androidTestImplementation("androidx.test.ext:junit:1.2.1")
  testImplementation("junit:junit:4.13.2")
  testImplementation("org.robolectric:robolectric:4.14.1")
  testImplementation("androidx.compose.ui:ui-test-junit4")

@@ -38,8 +38,8 @@ class MvpTest {
  @Test fun twoAccountsReceiveLatestPartnerTasteWithoutOriginal() = runTest {
   val db = FakeBackend(); val a = FakeRepository(db); val b = FakeRepository(db)
   try { a.register("a@test.local", "pass123", "A"); b.register("b@test.local", "pass123", "B"); b.join(a.createCode()); a.publish(setOf("silver"), urls[0], true)
-   assertEquals(setOf("silver"), b.state.value.partnerTaste.tags); assertEquals(setOf(digest(urls[0])), b.state.value.partnerTaste.excludedIds); assertTrue(b.state.value.saved.isEmpty())
-   a.publish(setOf("date"), null, true); assertEquals(setOf("date"), b.state.value.partnerTaste.tags)
+   assertTrue(b.state.value.partnerTaste.tags.isEmpty()); assertTrue(b.state.value.partnerTaste.excludedIds.isEmpty()); assertFalse(b.state.value.partnerReels!!.contains(urls[0])); assertTrue(b.state.value.saved.isEmpty())
+   a.publish(setOf("date"), null, true); assertTrue(b.state.value.partnerTaste.tags.isEmpty()); assertNotNull(b.state.value.partnerReels)
   } finally { a.close(); b.close() }
  }
  @Test fun fullCoupleCannotAcceptThirdAndLinkedUserCannotCreateAnother() = runTest {
@@ -64,10 +64,10 @@ class MvpTest {
    b.register("b@test.local", "pass123", "B")
    assertTrue(b.state.value.partnerTaste.tags.isEmpty())
    b.join(a.createCode())
-   assertEquals(setOf("silver", "necklace", "minimal"), b.state.value.partnerTaste.tags)
-   assertEquals(setOf(digest(urls[0])), b.state.value.partnerTaste.excludedIds)
+   assertTrue(b.state.value.partnerTaste.tags.isEmpty())
+   assertTrue(b.state.value.partnerTaste.excludedIds.isEmpty())
    assertTrue(b.state.value.saved.isEmpty())
-   assertTrue(RecommendationEngine.rank(b.state.value.partnerTaste, listOf(Candidate(urls[0], setOf("silver")))).isEmpty())
+   assertFalse(b.state.value.partnerReels!!.contains(urls[0])); assertEquals(5, b.state.value.partnerReels!!.size)
   } finally { a.close(); b.close() }
  }
  @Test fun oldCoupleTasteIsRetainedInPersonalStorageOnUnlink() = runTest {

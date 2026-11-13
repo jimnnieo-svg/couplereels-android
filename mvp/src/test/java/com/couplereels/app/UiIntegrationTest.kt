@@ -19,7 +19,13 @@ class UiIntegrationTest {
   override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("couplereels-demo-v1", Context.MODE_PRIVATE).edit().clear().commit() }
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MvpActivity>()
- private fun click(text: String) { val node = ui.onNodeWithText(text, useUnmergedTree = true); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
+ @org.junit.Before fun rememberScenarioIntent() { scenarioLaunchIntent = Intent(ui.activity.intent) }
+ private lateinit var scenarioLaunchIntent: Intent
+ @org.junit.After fun restoreScenarioIntentMetadata() {
+  if (::scenarioLaunchIntent.isInitialized) ui.runOnUiThread { ui.activity.intent = scenarioLaunchIntent }
+ }
+
+ private fun click(text: String) { val node = if (text in listOf("발견", "취향", "보관함", "우리")) ui.onNodeWithTag("tab-$text") else ui.onNodeWithText(text, useUnmergedTree = true); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
  private fun register() {
   ui.onNodeWithTag("email").performScrollTo().performTextInput("ui@demo.test")
   ui.onNodeWithTag("password").performScrollTo().performTextInput("test1234")
@@ -43,7 +49,7 @@ class UiIntegrationTest {
   register(); click("나중에 할게요")
   ui.runOnUiThread { instrumentation.callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle()
   click("실버")
-  ui.activityRule.scenario.recreate(); ui.waitForIdle()
+  ui.runOnUiThread { ui.activity.intent = scenarioLaunchIntent }; ui.activityRule.scenario.recreate(); ui.waitForIdle()
   ui.onNodeWithTag("share-sheet-url").assertTextContains(ReelUrl.candidates[0])
   ui.onNodeWithTag("share-save").assertIsEnabled()
   click("취소"); click("보관함")

@@ -1,3 +1,18 @@
+# CoupleReels P0-6 검증·발표 준비
+
+P0-5 `70129d1`에서 이어받은 버건디×골드 로컬 MVP입니다. 작성자 기기가 계산한 상위 최대 5개 후보 결과만 전달하고 비공개 태그·원본 해시를 상대에게 보내지 않도록 바꿨습니다.
+운영 규칙은 배포하지 않았으며 실제 서버 권한 검증과 Instagram 재생은 별도 확인이 필요합니다.
+
+- [P0-6 검증 결과](docs/P0-6-QA.md)
+- [개인정보 계약·운영 적용 조건](docs/P0-6-PRIVACY.md)
+- [11월 19일 1~2분 시연·사용자 확인 항목](docs/P0-6-DEMO.md)
+- 회귀/빌드: `bash qa/run-p06-regression.sh` (차단 환경의 명시적 JVM 부분집합: `PURE_JVM=1`)
+- 실제 기기 검사: 전용 로컬 테스트 기기에서 `bash qa/run-p06-device.sh SERIAL OUTPUT`
+
+아래 P0-5와 P0-3/P0-1 안내는 당시 기록으로 보존합니다.
+
+---
+
 # CoupleReels P0-5 UI integration
 
 P0-4 보존 소스에서 이어받은 Android 로컬 체험 MVP입니다. 4탭 UI·취향 온보딩·Instagram 링크 공유·태그 저장·보관함·커플 교차 추천을 통합했습니다.

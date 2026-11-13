@@ -14,9 +14,11 @@ object PartnerFeed {
   if (data.coupleId == null || data.members.distinct().size != 2 || user.uid !in data.members) return PartnerFeedState(FeedStatus.PARTNER_REQUIRED)
   // Do not briefly render the previous account's annotations during an account switch.
   if (catalog.ownerUid != user.uid) return PartnerFeedState(FeedStatus.CATALOG_LOADING)
-  if (data.partnerTaste.tags.isEmpty()) return PartnerFeedState(FeedStatus.TASTE_REQUIRED)
-  val reels = RecommendationEngine.rank(data.partnerTaste, catalog.items)
-  return PartnerFeedState(FeedStatus.READY, reels, data.partnerTaste.tags, data.partnerTaste.updatedAt, reels.count { it.candidate.tags.isEmpty() })
+  val urls = data.partnerReels ?: return PartnerFeedState(FeedStatus.TASTE_REQUIRED)
+  val reels = urls.mapNotNull(ReelUrl::normalize).distinct().filter { it in ReelUrl.candidates }.take(RecommendationProjection.MAX_PUBLIC_RESULTS).map { url ->
+   RankedReel(Candidate(url, catalog.items.find { it.url == url }?.tags.orEmpty()), 0.0)
+  }
+  return PartnerFeedState(FeedStatus.READY, reels, emptySet(), data.partnerUpdatedAt, reels.count { it.candidate.tags.isEmpty() })
  }
  fun observe(repository: CoupleRepository, catalog: StateFlow<CandidateCatalog>, scope: CoroutineScope): StateFlow<PartnerFeedState> =
   combine(repository.state, catalog, ::build).stateIn(scope, SharingStarted.Eagerly, PartnerFeedState())
