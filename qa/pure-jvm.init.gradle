@@ -1,0 +1,4 @@
+// Only for the explicitly selected pure JVM suites, which do not use native Robolectric.
+allprojects {
+ configurations.configureEach { exclude group: 'org.robolectric', module: 'nativeruntime-dist-compat' }
+}

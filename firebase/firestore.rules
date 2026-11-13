@@ -8,7 +8,7 @@ service cloud.firestore {
   function free() { let p = get(profile(request.auth.uid)).data; return p.coupleId == null || !get(couple(p.coupleId)).data.active; }
   function member(cid) { return signed() && request.auth.uid in get(couple(cid)).data.members; }
   function activeMember(cid) { return member(cid) && get(couple(cid)).data.active; }
-  function tags(t) { return t is list && t.size() <= 11 && t.hasOnly(['silver','necklace','minimal','gift','pendant','daily','jewelry','925','budget','anniversary','date']); }
+  function tags(t) { return t is list && t.size() <= 20 && t.hasOnly(['silver','necklace','minimal','gift','pendant','daily','jewelry','925','budget','anniversary','date','fashion','perfume','flowers','food','travel','tech','hobby','gold','bold']); }
   function validProfile(d, uid) { return d.keys().hasOnly(['uid','email','name','coupleId']) && d.uid == uid && d.email == request.auth.token.email && d.name is string && d.name.size() > 0 && d.name.size() <= 40 && (d.coupleId == null || d.coupleId is string); }
   function validLinkChange() {
    let next = request.resource.data.coupleId;

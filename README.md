@@ -1,3 +1,19 @@
+# CoupleReels P0-5 UI integration
+
+P0-4 보존 소스에서 이어받은 Android 로컬 체험 MVP입니다. 4탭 UI·취향 온보딩·Instagram 링크 공유·태그 저장·보관함·커플 교차 추천을 통합했습니다.
+운영 Firebase/두 폰 동기화와 실제 Instagram 재생은 미검증이며, 전체 UI/규칙 검사는 네트워크 제한으로 남아 있습니다.
+
+- [P0-5 QA와 시안 7장 반영 범위](docs/P0-5-QA.md)
+- [Galaxy S25+ 설치·11월 19일 시연 절차](docs/P0-5-GALAXY-DEMO.md)
+- [개인정보 경계·운영 적용 조건](docs/P0-5-SECURITY.md)
+- 전체 검증: `bash qa/run-local.sh` (JDK/SDK/Node/npm 의존성 준비 후)
+- 기기 UI smoke: 전용 테스트 기기에서 `python qa/device-smoke.py --serial SERIAL --apk APK --output OUTPUT`
+
+기존 앱을 삭제하거나 사용자 데이터를 초기화하지 마세요. 서버 동기화 없이 저장되는 체험 APK를 정식 운영 서비스로 소개하지 않습니다.
+아래는 기존 P0-3 및 P0-1 기록입니다.
+
+---
+
 # CoupleReels Android MVP
 
 최신 개발: P0-3 / 2026-11-09. Kotlin + Compose + Firebase.

@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import java.security.MessageDigest
 
-val tagVocabulary = listOf("silver", "necklace", "minimal", "gift", "pendant", "daily", "jewelry", "925", "budget", "anniversary", "date")
+val tagVocabulary = listOf("silver", "necklace", "minimal", "gift", "pendant", "daily", "jewelry", "925", "budget", "anniversary", "date", "fashion", "perfume", "flowers", "food", "travel", "tech", "hobby", "gold", "bold")
 fun cleanTags(tags: Collection<String>): Set<String> = tags.map { it.trim().lowercase() }.filter { it in tagVocabulary }.toSet()
 fun digest(text: String): String = MessageDigest.getInstance("SHA-256").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
 @Serializable data class Profile(val uid: String, val email: String, val name: String, val coupleId: String? = null)

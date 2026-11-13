@@ -1,0 +1,88 @@
+# CoupleReels P0-5 QA (2026-11-14 KST)
+
+## 소스와 수정 전 기준
+
+원격 기본 브랜치 `mvp/p0-3-cross-recommendation-20261109`의 HEAD는
+`82ee4e8f24f7696f681bce355e8aff35a274b24f`입니다.
+P0-4 `feature/p0-4-instagram-share-20261110` HEAD는
+`f874fa13dd97b255d2e14ed2f9afbe794c25f4e3`이며 2커밋 앞선 상태를 재확인했습니다.
+이 SHA에서 `feature/p0-5-ui-integration-20261113`을 만들었습니다. 기존 브랜치 reset/merge/force-push는 없습니다.
+수정 전 `:app:testDebugUnitTest :mvp:testDebugUnitTest`를 실행했습니다.
+P0-4는 ModalBottomSheet 실험 API opt-in 누락으로 `:mvp:compileDebugKotlin`에서 실패했습니다.
+기존 QA의 44 PASS를 최신 P0-4 통과 결과로 재인용하지 않습니다.
+이 checkout에는 GitHub Actions workflow가 없고 원격 실행 이력은 별도 검증하지 않았습니다.
+
+## 구현과 보존
+
+- 기존 FirebaseRepository/FakeRepository, URL 정규화, 추천 엔진을 재사용했습니다.
+- P0-1 소스/테스트, 기존 Firebase 설정 경로와 사용자 DB/prefs 이름을 유지했습니다.
+- 발견/취향/보관함/우리 4탭, 관심사→스타일·선물 온보딩, 공유 태그 BottomSheet를 연결했습니다.
+- 계정 설정, 로그아웃, 초대 코드 복사/입력/해제, 해제 확인, 개인 기능 단독 사용을 제공합니다.
+- 새 태그 9개를 클라이언트와 로컬 규칙에 함께 추가했습니다. 운영 규칙을 배포하지 않았습니다.
+- URL 없는 이미지 공유는 추측하지 않고 링크 입력을 안내합니다. 로그인 전 공유 및 화면 복구 상태를 유지합니다.
+- 공유 시 태그 저장 실패는 시트에 남고 성공으로 표시하지 않습니다. 계정 전환 시 이전 공유/후보 상태를 비웁니다.
+- 기존 후보 수동 분류를 발견 카드의 “후보 태그 편집”으로 보존했습니다. 모드+사용자별 기기 설정입니다.
+- 원본 링크를 직접 공유하지 않되 상대가 태그·해시를 읽는다는 한계는 [보안 검토](P0-5-SECURITY.md)에 적었습니다.
+- 기기 내부 체험임을 짧게 계속 표시합니다. Firebase 진단/모드 전환/P0-1 검증 진입은 Debug 계정 설정으로 이동했습니다.
+- 시스템 인셋/IME, 스크롤/세로 페이저, FlowRow 태그, 최소 터치 크기와 차콜 텍스트 대비를 적용했습니다.
+- FashionFit와 다른 프로젝트, 운영 데이터, 권한 및 기본 브랜치는 수정하지 않았습니다.
+
+## 시안 7장 매핑
+
+| 시안 | 구현 | 의도적인 차이·검증 제한 |
+|---|---|---|
+| 01 발견 A1 | 세로 페이저, 현재 후보 수, 관심/저장, 내부 공식 임베드 시도 | 검증되지 않은 영상을 사진+재생 버튼으로 꾸미지 않음. Instagram 열기/링크 복사 제공 |
+| 02 내 취향 | 관심사/선물 카드, 공유 내역, 수정/링크 입력 | 가상의 향수·목걸이 썸네일을 실제 콘텐츠로 표시하지 않음 |
+| 03 보관함 | 전체/주얼리/데이트 필터, 링크/태그, 관심/삭제 | 확인된 썸네일 공급원 부재로 실제 URL 카드 사용 |
+| 04 우리 | 미연결 카드, 개인 기능 계속, 초대/코드/계정 설정 | 완전 비공개 문구 대신 태그 공유 범위를 안내 |
+| 00 온보딩1 | 8개 관심사, 다중 선택, 다음/건너뛰기 | 제공 이미지의 사진을 실제 릴스 자산으로 사용하지 않음 |
+| 05 온보딩2 | 스타일/선물 선택, 저장/이전/나중에 | 추천 계층의 태그로 실제 저장 |
+| 06 공유 시트 | URL 미리보기, 태그, 중복 안내, 저장/취소 | 링크에서 영상 내용을 추측하거나 가짜 썸네일을 만들지 않음 |
+
+7개 화면 흐름을 코드에 통합했지만 원본 이미지와 픽셀 단위 일치를 주장하지 않습니다.
+
+## 실행 결과
+
+| 검사 | 실제 결과 |
+|---|---|
+| P0-1 독립 모듈 테스트 | **PASS 6**, FAIL 0, SKIP 0. `--rerun-tasks`로 재실행 |
+| MVP 순수 JVM 회귀 | **PASS 36**, FAIL 0, SKIP 0. 기존 URL 6 + 계정/저장 18 + 추천 9 + 신규 3 |
+| Firebase 배포 guard 테스트 | **PASS 3**, FAIL 0, SKIP 0 |
+| MVP 전체 테스트 | **BLOCKED**. native Robolectric JAR의 Maven→gcp.mirrors.maven.org 리디렉션이 403 |
+| Android API 테스트 별도 진단 | 12개 시작 시도, **러너 FAIL 12**. 모두 Android 런타임 다운로드 proxy 403으로 초기화 실패. 앱 assertion 실행 결과가 아님 |
+| 나머지 Compose/기동/내보내기 UI 테스트 | **BLOCKED 6**. 새 UI 테스트 2개 포함. 컴파일은 성공 |
+| 공식 Firestore 규칙 테스트 | **BLOCKED 10**. LOCAL-VERIFICATION.md의 기존 공식 다운로드 제한 유지 |
+| 배포 검사 | 예상대로 exit 1, 기존 BLOCKED 보고서와 새 규칙은 배포 가능 판정 아님 |
+| Gradle 설정/앱·테스트 컴파일 | **PASS** |
+| 두 Debug APK 및 서명 검증 | **PASS** |
+| P0-1 Lint | **PASS**, 오류 0 / 경고 5 |
+| MVP Lint | **PASS**, 오류 0 / 경고 13 |
+| Galaxy S25+ | **NOT TESTED**, 연결된 실제 기기 없음 |
+| 실제 Firebase 두 폰 동기화 | **NOT TESTED**, google-services.json 및 운영 연결 없음 |
+| 실제 Instagram 영상/소리 | **NOT TESTED**, 자동 테스트/HTTP 응답을 성공으로 간주하지 않음 |
+
+P0-1 6개는 MVP 테스트에도 포함되어 중복됩니다. 모듈별 실행 합계는 45 PASS이지만 서로 다른 테스트는 39개입니다.
+12개 초기화 실패를 통과로 바꾸지 않았습니다. 기존 44 PASS 전체를 재현했다고 주장하지 않습니다.
+
+## 재현
+
+JDK 17+의 완전한 JDK, SDK 35/Build Tools 35.0.0, Node 22, npm ci가 필요합니다.
+현재 클라우드에서는 `source /workspace/tooling/activate.sh`로 JDK/SDK/프록시·신뢰 저장소/캐시를 활성화합니다.
+
+```sh
+# 정상 네트워크에서 전체 검사
+bash qa/run-local.sh
+# 차단 환경에서 명시적으로 순수 JVM 부분집합+Lint+APK 검사
+PURE_JVM=1 GRADLE_BIN=/workspace/tooling/gradle-8.11.1/bin/gradle bash qa/run-local.sh
+```
+
+`qa/pure-jvm.init.gradle`는 누락된 native runtime 모듈만 제외합니다. 위 순수 JVM 선택 클래스는 그 모듈을 사용하지 않습니다.
+이 구성으로 UI 테스트 통과를 주장하지 않습니다. Lint는 해당 네이티브 실행 파일 없이 정적 분석했습니다.
+도메인 설정을 검토·저장해 `gcp.mirrors.maven.org` 접근을 적용한 뒤 새 Gradle 프로세스로 전체 검사를 재실행해야 합니다.
+규칙 검증은 기존 제한을 명시적으로 해제한 별도 환경에서 실행하며, 결과 보고서를 사람이 PASS로 편집해서는 안 됩니다.
+
+## 설치와 발표
+
+[Galaxy 설치·시연 절차](P0-5-GALAXY-DEMO.md), [개인정보·출시 전 조건](P0-5-SECURITY.md)을 확인하세요.
+현재 결과물은 설치용 로컬 체험 MVP입니다. 운영 서비스 완성/두 기기 실사용/실제 릴스 재생을 검증한 정식 출시본이 아닙니다.
+환경·플랫폼·Firebase 설정이 해결될 때까지 전체 실사용 목표는 미완료입니다.
