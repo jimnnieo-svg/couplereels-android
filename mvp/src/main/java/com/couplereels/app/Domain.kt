@@ -13,7 +13,7 @@ fun digest(text: String): String = MessageDigest.getInstance("SHA-256").digest(t
 @Serializable data class SavedReel(val url: String, val tags: Set<String> = emptySet(), val liked: Boolean = false, val privateSource: Boolean = true)
 @Serializable data class Candidate(val url: String, val tags: Set<String> = emptySet())
 data class RankedReel(val candidate: Candidate, val score: Double)
-data class AppData(val user: Profile? = null, val coupleId: String? = null, val members: List<String> = emptyList(), val myTaste: Taste = Taste(), val partnerTaste: Taste = Taste(), val saved: List<SavedReel> = emptyList(), val error: String? = null)
+data class AppData(val user: Profile? = null, val coupleId: String? = null, val members: List<String> = emptyList(), val myTaste: Taste = Taste(), val partnerTaste: Taste = Taste(), val saved: List<SavedReel> = emptyList(), val error: String? = null, val isDemo: Boolean = false)
 
 /** Only manually assigned metadata. Empty tags mean unclassified, never inferred video content. */
 object RecommendationEngine {
