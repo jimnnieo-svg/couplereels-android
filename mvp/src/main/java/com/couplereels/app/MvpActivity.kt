@@ -53,7 +53,7 @@ class MvpActivity : ComponentActivity() {
  private fun receive(i: Intent) {
   if (i.action != Intent.ACTION_SEND) return
   val url = ReelIntents.sharedUrl(i)
-  if (url == null) { incoming = ""; shareError = "릴스 링크를 받지 못했어요. 이미지 내용은 분석하지 않아요. Instagram에서 링크를 복사해 직접 입력해 주세요." }
+  if (url == null) { incoming = ""; shareError = "릴스 링크를 받지 못했어요. Instagram에서 개별 릴스 링크를 복사해 주세요." }
   else { shareError = null; incoming = url }
  }
  private fun external(url: String, error: (String) -> Unit) {
@@ -119,14 +119,14 @@ class MvpActivity : ComponentActivity() {
   LaunchedEffect(state.myTaste) { if (step == 0) tags = state.myTaste.tags }
   Scaffold(containerColor = cream, bottomBar = {
    if (active && step == 0) NavigationBar(containerColor = cream) {
-    listOf("발견" to "⌂", "취향" to "♡", "보관함" to "▱", "우리" to "♧").forEach { (tab, icon) -> NavigationBarItem(selected = page == tab, onClick = { page = tab; settings = false; previewUrl = null; message = "" }, icon = { Text(icon, style = MaterialTheme.typography.headlineSmall) }, label = { Text(tab) }, colors = NavigationBarItemDefaults.colors(indicatorColor = baby)) }
+    listOf("발견" to "⌂", "취향" to "♡", "보관함" to "▱", "우리" to "♧").forEach { (tab, icon) -> NavigationBarItem(selected = page == tab, onClick = { page = tab; settings = false; previewUrl = null; message = ""; shareError = null }, icon = { Text(icon, style = MaterialTheme.typography.headlineSmall) }, label = { Text(tab) }, colors = NavigationBarItemDefaults.colors(indicatorColor = baby)) }
    }
   }) { insets ->
    Column(Modifier.fillMaxSize().padding(insets).imePadding().background(Brush.verticalGradient(listOf(cream, baby.copy(alpha = .3f))))) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
      Brand(Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) diagnostics = true }))
      if (state.isDemo) Text("체험 모드 · 이 기기에만 저장", style = MaterialTheme.typography.labelMedium, color = muted)
-     if (!active) shareError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+     shareError?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("share-input-error")) }
      if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
      if (message.isNotBlank()) Text(message, Modifier.testTag("notice"), style = MaterialTheme.typography.bodySmall)
      state.error?.let { Text("연결을 확인해 주세요: $it", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
@@ -208,7 +208,6 @@ class MvpActivity : ComponentActivity() {
        if (state.saved.none { it.tags.isNotEmpty() }) Text("Instagram에서 좋아하는 릴스를 공유해 보세요.")
        state.saved.filter { it.tags.isNotEmpty() }.forEach { item -> SavedCard(item, !busy, openLabel = "태그 수정", onOpen = { link = item.url; sheet = item.url; incoming = item.url; shareTags = item.tags }, onLike = { action { repo.save(item.url, !item.liked); "관심 상태 변경" } }, onRemove = { action { repo.removeSaved(item.url); "보관함에서 삭제했어요." } }) }
        if (!state.isDemo) PrivacyNote()
-       shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
        OutlinedTextField(link, { link = it; shareError = null }, label = { Text("Instagram Reel 링크 직접 입력") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("share-url"))
        Primary("릴스 공유하기", !busy) { val valid = ReelUrl.normalize(link); if (valid == null) message = "올바른 개별 Instagram Reel 링크를 입력해 주세요." else { sheet = valid; incoming = valid; shareTags = emptySet(); shareSaveError = "" } }
       }
