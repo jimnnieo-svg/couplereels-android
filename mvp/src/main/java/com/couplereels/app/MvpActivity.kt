@@ -63,7 +63,7 @@ class MvpActivity : ComponentActivity() {
    .onFailure { error("Instagram 링크를 열 앱이 없어요. 링크를 복사해서 브라우저에 붙여넣어 주세요.") }
  }
 
- @OptIn(ExperimentalMaterial3Api::class)
+ @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
  @Composable private fun App() {
   var demoMode by remember { mutableStateOf(demoStore.active) }
   val real = !demoMode && firebaseAvailable
@@ -102,7 +102,7 @@ class MvpActivity : ComponentActivity() {
   fun copyLink(value: String) { getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("CoupleReels", value)); message = "복사했어요." }
   LaunchedEffect(incoming) { if (incoming.isNotBlank() && incoming != sheet) { if (!active) previousUid = null; sheet = incoming; link = incoming; shareTags = emptySet(); shareSaveError = ""; page = "취향" } }
   LaunchedEffect(shareError) { if (shareError != null) { dismissShare(); page = "취향" } }
-  LaunchedEffect(demoMode, state.user?.uid) {
+  LaunchedEffect(demoMode, currentUid) {
    val uid = currentUid
    if (uid != null && previousUid != null && previousUid != uid) { dismissShare(); link = "" }
    if (uid != null) previousUid = uid
@@ -206,7 +206,7 @@ class MvpActivity : ComponentActivity() {
        SoftCard { Text("♧ 선물로 받고 싶은 것", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold); Text((state.myTaste.tags intersect gifts.toSet()).joinToString(" · ") { labels[it] ?: it }.ifEmpty { "취향 수정에서 선물을 골라주세요" }) }
        Text("내가 공유한 릴스", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
        if (state.saved.none { it.tags.isNotEmpty() }) Text("Instagram에서 좋아하는 릴스를 공유해 보세요.")
-       state.saved.filter { it.tags.isNotEmpty() }.forEach { item -> SavedCard(item, !busy, onOpen = { link = item.url; sheet = item.url; incoming = item.url; shareTags = item.tags }, onLike = { action { repo.save(item.url, !item.liked); "관심 상태 변경" } }, onRemove = { action { repo.removeSaved(item.url); "보관함에서 삭제했어요." } }) }
+       state.saved.filter { it.tags.isNotEmpty() }.forEach { item -> SavedCard(item, !busy, openLabel = "태그 수정", onOpen = { link = item.url; sheet = item.url; incoming = item.url; shareTags = item.tags }, onLike = { action { repo.save(item.url, !item.liked); "관심 상태 변경" } }, onRemove = { action { repo.removeSaved(item.url); "보관함에서 삭제했어요." } }) }
        if (!state.isDemo) PrivacyNote()
        shareError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
        OutlinedTextField(link, { link = it; shareError = null }, label = { Text("Instagram Reel 링크 직접 입력") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("share-url"))
@@ -291,11 +291,11 @@ private fun Set<String>.toggle(tag: String) = if (tag in this) this - tag else t
 @Composable private fun ChoiceGrid(values: List<String>, selected: Set<String>, onToggle: (String) -> Unit) {
  values.chunked(2).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { tag -> OutlinedButton(onClick = { onToggle(tag) }, modifier = Modifier.weight(1f).heightIn(min = 86.dp), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (tag in selected) baby else cream, contentColor = ink)) { Text((if (tag in selected) "✓  " else "") + labels.getValue(tag), fontWeight = FontWeight.SemiBold) } } } }
 }
-@Composable private fun SavedCard(item: SavedReel, enabled: Boolean, onOpen: () -> Unit, onLike: () -> Unit, onRemove: () -> Unit) {
+@Composable private fun SavedCard(item: SavedReel, enabled: Boolean, openLabel: String = "릴스 열기", onOpen: () -> Unit, onLike: () -> Unit, onRemove: () -> Unit) {
  SoftCard {
   Text("Instagram Reel", fontWeight = FontWeight.Bold); Text(item.url, style = MaterialTheme.typography.bodySmall)
   if (item.tags.isNotEmpty()) Text(item.tags.joinToString(" · ") { labels[it] ?: it }, color = muted, style = MaterialTheme.typography.bodySmall)
-  TextButton(onClick = onOpen) { Text("링크 열기") }
+  TextButton(onClick = onOpen) { Text(openLabel) }
   Row { TextButton(enabled = enabled, onClick = onLike) { Text(if (item.liked) "♥ 관심 해제" else "♡ 관심") }; TextButton(enabled = enabled, onClick = onRemove) { Text("삭제") } }
  }
 }
