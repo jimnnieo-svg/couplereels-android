@@ -92,7 +92,7 @@ class MvpActivity : ComponentActivity() {
   var classifyUrl by remember { mutableStateOf<String?>(null) }; var classifyTags by remember { mutableStateOf(emptySet<String>()) }
   val owner = if (state.isDemo) "guest-p06" else "${real}:${state.user?.uid}"
   val contentScroll = rememberScrollState()
-  LaunchedEffect(page, step, settings, state.user?.uid) { contentScroll.scrollTo(0) }
+  LaunchedEffect(page, step, settings, previewUrl, currentUid) { contentScroll.scrollTo(0) }
   val catalog = remember { MutableStateFlow(CandidateCatalog()) }
   val feedScope = remember(repo) { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
   DisposableEffect(feedScope) { onDispose { feedScope.cancel() } }
@@ -100,8 +100,8 @@ class MvpActivity : ComponentActivity() {
   fun action(success: (() -> Unit)? = null, block: suspend () -> String) { if (!busy) scope.launch { busy = true; message = ""; try { message = withTimeout(25000) { block() }; success?.invoke() } catch (e: TimeoutCancellationException) { message = "저장 응답이 지연됐어요. 현재 상태를 확인하고 다시 시도해 주세요." } catch (e: CancellationException) { throw e } catch (e: Exception) { message = e.userMessage() } finally { busy = false } } }
   fun dismissShare() { sheet = ""; incoming = ""; link = ""; shareTags = emptySet(); shareSaveError = "" }
   fun copyLink(value: String) { getSystemService(android.content.ClipboardManager::class.java).setPrimaryClip(android.content.ClipData.newPlainText("CoupleReels", value)); message = "복사했어요." }
-  LaunchedEffect(incoming) { if (incoming.isNotBlank() && incoming != sheet) { if (!active) previousUid = null; sheet = incoming; link = incoming; shareTags = emptySet(); shareSaveError = ""; page = "취향" } }
-  LaunchedEffect(shareError) { if (shareError != null) { dismissShare(); page = "취향" } }
+  LaunchedEffect(incoming) { if (incoming.isNotBlank() && incoming != sheet) { if (!active) previousUid = null; previewUrl = null; settings = false; sheet = incoming; link = incoming; shareTags = emptySet(); shareSaveError = ""; page = "취향" } }
+  LaunchedEffect(shareError) { if (shareError != null) { dismissShare(); previewUrl = null; settings = false; page = "취향" } }
   LaunchedEffect(demoMode, currentUid) {
    val uid = currentUid
    if (uid != null && previousUid != null && previousUid != uid) { dismissShare(); link = "" }
@@ -187,7 +187,7 @@ class MvpActivity : ComponentActivity() {
       if (step == 2) TextButton(onClick = { step = 1 }) { Text("이전") }
      } else if (previewUrl != null) {
       TextButton(onClick = { previewUrl = null }) { Text("보관함으로 돌아가기") }
-      ReelPreview(previewUrl!!, Modifier.fillMaxWidth().height(540.dp), onExternal = { external(previewUrl!!) { message = it } }, onCopy = { copyLink(previewUrl!!) })
+      ReelPreview(previewUrl!!, Modifier.fillMaxWidth().height(460.dp), onExternal = { external(previewUrl!!) { message = it } }, onCopy = { copyLink(previewUrl!!) })
      } else if (settings && state.isDemo) {
       Heading("체험 설정", "취향과 보관함은 이 기기에 남아요")
       Text("실제 계정 데이터와 분리되어 있고 서버에 업로드하지 않아요.")
@@ -256,7 +256,7 @@ class MvpActivity : ComponentActivity() {
     }
    }
   }
-  if (sheet.isNotBlank() && active && step == 0 && (previousUid == null || previousUid == currentUid)) ModalBottomSheet(onDismissRequest = { if (!busy) dismissShare() }, containerColor = cream) {
+  if (sheet.isNotBlank() && active && step == 0 && (previousUid == null || previousUid == currentUid)) ModalBottomSheet(sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), onDismissRequest = { if (!busy) dismissShare() }, containerColor = cream) {
    Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
     Brand(); Heading("릴스 취향에 담기", "이 릴스에서 어떤 점이 좋았나요?")
     SoftCard { Text("Instagram Reel", fontWeight = FontWeight.Bold); Text(sheet, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("share-sheet-url")) }
