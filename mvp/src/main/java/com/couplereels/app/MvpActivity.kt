@@ -127,7 +127,11 @@ class MvpActivity : ComponentActivity() {
    initializedOwner = owner
    }
    classifyUrl = null
-   val stored = runCatching { json.decodeFromString<List<Candidate>>(prefs.getString("$owner:catalog", "[]")!!) }.getOrDefault(emptyList())
+   // Guest discovery uses editorial data, not the legacy account catalog.
+   // SharedPreferences' first read can wait for disk loading; keep it off the UI thread.
+   val stored: List<Candidate> = if (state.isDemo) emptyList() else withContext(Dispatchers.IO) {
+    runCatching { json.decodeFromString<List<Candidate>>(prefs.getString("$owner:catalog", "[]")!!) }.getOrDefault(emptyList())
+   }
    catalog.value = CandidateCatalog(uid, ReelUrl.candidates.map { u -> stored.find { it.url == u } ?: Candidate(u) })
   }
   LaunchedEffect(state.myTaste) { if (step == 0) tags = state.myTaste.tags }
