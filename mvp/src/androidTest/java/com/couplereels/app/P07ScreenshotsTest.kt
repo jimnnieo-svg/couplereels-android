@@ -47,6 +47,9 @@ class P07ScreenshotsTest {
   // Keep a separate full-display capture for checking Android system bars/overlays.
   InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()?.let {screen ->
    File(out,"$name-system.png").outputStream().use {screen.compress(Bitmap.CompressFormat.PNG,100,it)}
+   // The modal and main Compose owners have no stable ordering; use the full
+   // Android display for this shot so the actual sheet is always included.
+   if(name=="06-share-sheet") File(out,"$name.png").outputStream().use {screen.compress(Bitmap.CompressFormat.PNG,100,it)}
    screen.recycle()
   }
  }
@@ -58,7 +61,7 @@ class P07ScreenshotsTest {
   capture("02-taste")
   ui.onNodeWithText("릴스 공유하기").performScrollTo(); capture("02-taste-bottom")
   click("취향 수정"); capture("00-onboarding-1")
-  ui.onNodeWithTag("onboarding-next").performScrollTo(); capture("00-onboarding-1-bottom")
+  ui.onNodeWithText("나중에 할게요").performScrollTo(); capture("00-onboarding-1-bottom")
   click("다음"); capture("05-onboarding-2")
   ui.onNodeWithTag("onboarding-next").performScrollTo(); capture("05-onboarding-2-bottom")
   click("취향 저장하고 시작하기")

@@ -103,7 +103,7 @@ private val iconPaths=mapOf(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable internal fun Tags(values:Collection<String>,selected:Set<String>,enabled:Boolean=true,onToggle:(String)->Unit) {
  FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalArrangement=Arrangement.spacedBy(0.dp)) { values.forEach { tag ->
-  FilterChip(selected=tag in selected,enabled=enabled,onClick={onToggle(tag)},label={Text(labels[tag] ?: tag,fontSize=14.sp)},trailingIcon=if(tag in selected) { { Glyph("check",Modifier.size(16.dp),Color.White) } } else null,shape=RoundedCornerShape(25.dp),modifier=Modifier.heightIn(min=48.dp),colors=FilterChipDefaults.filterChipColors(selectedContainerColor=roseDeep,selectedLabelColor=Color.White),border=FilterChipDefaults.filterChipBorder(enabled,tag in selected,borderColor=blushBorder,selectedBorderColor=Color.Transparent))
+  FilterChip(selected=tag in selected,enabled=enabled,onClick={onToggle(tag)},label={Text(labels[tag] ?: tag,fontSize=14.sp)},trailingIcon=if(tag in selected) { { Glyph("check",Modifier.size(16.dp),Color.White) } } else null,shape=RoundedCornerShape(25.dp),colors=FilterChipDefaults.filterChipColors(selectedContainerColor=roseDeep,selectedLabelColor=Color.White),border=FilterChipDefaults.filterChipBorder(enabled,tag in selected,borderColor=blushBorder,selectedBorderColor=Color.Transparent))
  } }
 }
 @Composable internal fun MenuRow(symbol:String,title:String,onClick:()->Unit) {
@@ -118,3 +118,4 @@ private val iconPaths=mapOf(
   }
  }
 }
+

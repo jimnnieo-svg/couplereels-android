@@ -143,7 +143,8 @@ class MvpActivity : ComponentActivity() {
    // Explicit top padding survives switching from the edge-to-edge pager to a
    // regular tab without reusing a previously consumed inset modifier node.
    val safeTop = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
-   Column(Modifier.fillMaxSize().padding(insets).padding(top = if (immersive) 0.dp else safeTop).then(if (!active || step > 0) Modifier.navigationBarsPadding() else Modifier).imePadding().background(Brush.verticalGradient(listOf(cream, Color.White, cream)))) {
+   val safeBottom = WindowInsets.navigationBarsIgnoringVisibility.asPaddingValues().calculateBottomPadding()
+   Column(Modifier.fillMaxSize().padding(insets).padding(top = if (immersive) 0.dp else safeTop, bottom = if (!active || step > 0) safeBottom else 0.dp).imePadding().background(Brush.verticalGradient(listOf(cream, Color.White, cream)))) {
     if (!immersive) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp)) {
      Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (step > 0) Arrangement.Center else Arrangement.Start) {
       Brand(Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) diagnostics = true }), compact = active && step == 0)
