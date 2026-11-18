@@ -14,7 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 @RunWith(AndroidJUnit4::class)
 class UiIntegrationTest {
  @get:Rule(order = 0) val reset = object : ExternalResource() {
-  override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(DemoStore.NAME, Context.MODE_PRIVATE).edit().clear().commit() }
+  override fun before() { listOf(DemoStore.NAME, DemoUiStore.NAME).forEach { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(it, Context.MODE_PRIVATE).edit().clear().commit() } }
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MvpActivity>()
  private fun click(text: String) { val node = if (text in listOf("발견","취향","보관함","우리")) ui.onNodeWithTag("tab-$text") else ui.onNodeWithText(text); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
