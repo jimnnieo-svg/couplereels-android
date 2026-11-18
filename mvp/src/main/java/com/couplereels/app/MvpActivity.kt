@@ -136,7 +136,10 @@ class MvpActivity : ComponentActivity() {
   Scaffold(containerColor = cream, contentWindowInsets = WindowInsets(0,0,0,0), bottomBar = {
    if (active && step == 0) CoupleNavigation(page) { tab -> page = tab; settings = false; previewUrl = null; message = ""; shareError = null; showingUrlInput = false }
   }) { insets ->
-   Column(Modifier.fillMaxSize().padding(insets).then(if (!immersive) Modifier.statusBarsPadding() else Modifier).then(if (!active || step > 0) Modifier.navigationBarsPadding() else Modifier).imePadding().background(Brush.verticalGradient(listOf(cream, Color.White, cream)))) {
+   // Explicit top padding survives switching from the edge-to-edge pager to a
+   // regular tab without reusing a previously consumed inset modifier node.
+   val safeTop = WindowInsets.statusBarsIgnoringVisibility.asPaddingValues().calculateTopPadding()
+   Column(Modifier.fillMaxSize().padding(insets).padding(top = if (immersive) 0.dp else safeTop).then(if (!active || step > 0) Modifier.navigationBarsPadding() else Modifier).imePadding().background(Brush.verticalGradient(listOf(cream, Color.White, cream)))) {
     if (!immersive) Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp)) {
      Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (step > 0) Arrangement.Center else Arrangement.Start) {
       Brand(Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) diagnostics = true }), compact = active && step == 0)

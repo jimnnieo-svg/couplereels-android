@@ -45,7 +45,7 @@ internal val gifts = listOf("necklace", "flowers", "perfume", "anniversary", "gi
 /** Native line icons on a 24-unit grid, never screenshots or font glyphs. */
 private val iconPaths=mapOf(
  "heart" to "M12 20 C10 18 3 13 3 8 C3 3 9 2 12 6 C15 2 21 3 21 8 C21 13 14 18 12 20 Z",
- "home" to "M3 11 L12 3 L21 11 M5 10 L5 21 L10 21 L10 15 L14 15 L14 21 L19 21 L19 10",
+ "home" to "M3 11 L12 3 L21 11 L19 11 L19 21 L14 21 L14 15 L10 15 L10 21 L5 21 L5 11 Z",
  "bookmark" to "M6 3 L18 3 L18 21 L12 17 L6 21 Z",
  "people" to "M9 11 A4 4 0 1 0 9 3 A4 4 0 1 0 9 11 M2 21 C2 12 16 12 16 21 M17 10 A3 3 0 1 0 17 4 M18 14 C22 14 23 17 23 20",
  "person" to "M12 11 A4 4 0 1 0 12 3 A4 4 0 1 0 12 11 M4 21 C4 11 20 11 20 21",

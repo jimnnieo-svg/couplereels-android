@@ -99,7 +99,7 @@ internal fun matchesSavedFilter(tags:Set<String>,filter:String):Boolean = when(f
  Column(modifier.testTag("saved-reel-${digest(item.url)}").clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha=.6f)).border(1.dp,blushBorder,RoundedCornerShape(16.dp))) {
   Box(Modifier.fillMaxWidth().height(158.dp).clickable(onClick=onOpen)) {
    ReferencePhoto(photoFor(item.tags),Modifier.fillMaxSize())
-   Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(ink.copy(alpha=.67f)).padding(5.dp)) { Text("태그 예시 · 원본 썸네일 아님",color=Color.White,fontSize=10.sp,lineHeight=14.sp) }
+   Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(ink.copy(alpha=.67f)).padding(5.dp)) { Text("태그 예시 · 원본 썸네일 아님",color=Color.White,fontSize=11.sp,lineHeight=15.sp) }
    if(onRemove!=null) IconButton(onClick=onRemove,modifier=Modifier.align(Alignment.TopEnd).padding(3.dp).size(48.dp).semantics { contentDescription="보관함에서 삭제" }) { Box(Modifier.size(30.dp).background(cream,CircleShape),contentAlignment=Alignment.Center) { Glyph("bookmark",Modifier.size(20.dp),pink,true) } }
    else Box(Modifier.align(Alignment.TopEnd).padding(8.dp).background(ink.copy(alpha=.5f),RoundedCornerShape(8.dp)).padding(5.dp)) { Glyph("lock",Modifier.size(13.dp),Color.White) }
   }

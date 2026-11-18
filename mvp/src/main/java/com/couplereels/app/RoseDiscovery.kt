@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.testTag
@@ -43,7 +44,7 @@ import com.couplereels.mvp.R
 }
 @Composable private fun FeedAction(icon:String,label:String,active:Boolean,onClick:()->Unit) { IconButton(onClick=onClick,modifier=Modifier.size(48.dp).semantics {contentDescription=label}) { Glyph(icon,Modifier.size(29.dp),if(active) baby else Color.White,active) } }
 @Composable internal fun DemoSavedGrid(items:List<DemoContent>,onOpen:(DemoContent)->Unit,onRemove:(DemoContent)->Unit) {
- Column(verticalArrangement=Arrangement.spacedBy(10.dp)) { items.chunked(2).forEach { row -> Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { row.forEach { c -> Column(Modifier.weight(1f).background(Color.White.copy(alpha=.6f),RoundedCornerShape(16.dp))) {
+ Column(verticalArrangement=Arrangement.spacedBy(10.dp)) { items.chunked(2).forEach { row -> Row(horizontalArrangement=Arrangement.spacedBy(9.dp)) { row.forEach { c -> Column(Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha=.6f))) {
   Box(Modifier.fillMaxWidth().height(158.dp).clickable {onOpen(c)}) { ReferencePhoto(photoFor(c.tags),Modifier.fillMaxSize()); Text("데모 콘텐츠",Modifier.align(Alignment.BottomStart).background(ink.copy(alpha=.65f)).padding(5.dp),color=Color.White,fontSize=11.sp); IconButton(onClick={onRemove(c)},modifier=Modifier.align(Alignment.TopEnd).semantics {contentDescription="데모 보관 취소"}) { Glyph("bookmark",color=cream,filled=true) } }
   Text(c.title,Modifier.fillMaxWidth().clickable {onOpen(c)}.padding(10.dp),fontWeight=FontWeight.SemiBold,fontSize=14.sp)
  } }; if(row.size==1) Spacer(Modifier.weight(1f)) } } }
