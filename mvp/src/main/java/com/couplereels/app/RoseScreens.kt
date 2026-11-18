@@ -75,7 +75,11 @@ internal fun matchesSavedFilter(tags:Set<String>,filter:String):Boolean = when(f
    Text("여러 개 선택할 수 있어요",Modifier.background(baby.copy(alpha=.55f),CircleShape).padding(horizontal=12.dp,vertical=5.dp),color=muted,style=MaterialTheme.typography.bodySmall)
    InterestChoices(tags,onToggle)
   } else {
-   styleSections(tags).forEach { group -> SectionTitle(group.icon,group.title); StyleChoices(group.values,tags,onToggle) }
+   val sections=styleSections(tags)
+   var chosenSection by remember { mutableStateOf(sections.first().icon) }
+   if(sections.size>1) Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) { sections.forEach { section -> FilterChip(selected=section.icon==chosenSection,onClick={chosenSection=section.icon},label={Text(labels[section.icon] ?: "스타일")},shape=CircleShape) } }
+   val group=sections.find {it.icon==chosenSection} ?: sections.first()
+   SectionTitle(group.icon,group.title); StyleChoices(group.values,tags,onToggle)
    SectionTitle("gift","선물로 받고 싶은 것 (선택)")
    Tags(gifts,tags,!busy,onToggle)
   }
@@ -92,7 +96,7 @@ internal fun matchesSavedFilter(tags:Set<String>,filter:String):Boolean = when(f
 
 /** Illustrations reflect user-assigned tags. They are explicitly not fetched Reel thumbnails. */
 @Composable internal fun ReelTile(item:SavedReel,onOpen:()->Unit,onRemove:(()->Unit)?=null,modifier:Modifier=Modifier) {
- Column(modifier.clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha=.6f)).border(1.dp,blushBorder,RoundedCornerShape(16.dp))) {
+ Column(modifier.testTag("saved-reel-${digest(item.url)}").clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha=.6f)).border(1.dp,blushBorder,RoundedCornerShape(16.dp))) {
   Box(Modifier.fillMaxWidth().height(158.dp).clickable(onClick=onOpen)) {
    ReferencePhoto(photoFor(item.tags),Modifier.fillMaxSize())
    Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(ink.copy(alpha=.67f)).padding(5.dp)) { Text("태그 예시 · 원본 썸네일 아님",color=Color.White,fontSize=10.sp,lineHeight=14.sp) }

@@ -24,7 +24,7 @@ import com.couplereels.mvp.R
   Box(Modifier.fillMaxSize()) {
    ReferencePhoto(if(c.id=="jewelry") R.drawable.p07_discover else photoFor(c.tags),Modifier.fillMaxSize())
    Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(ink.copy(alpha=.46f),Color.Transparent,Color.Transparent,ink.copy(alpha=.82f)))))
-   Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().padding(horizontal=17.dp,vertical=13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Brand(light=true,compact=true); Text("연인을 위한 발견",color=Color.White,fontSize=11.sp,modifier=Modifier.border(1.dp,Color.White.copy(alpha=.4f),CircleShape).background(Color.White.copy(alpha=.12f),CircleShape).padding(horizontal=9.dp,vertical=6.dp)) }
+   Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(horizontal=17.dp,vertical=13.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween) { Brand(light=true,compact=true); Text("연인을 위한 발견",color=Color.White,fontSize=11.sp,modifier=Modifier.border(1.dp,Color.White.copy(alpha=.4f),CircleShape).background(Color.White.copy(alpha=.12f),CircleShape).padding(horizontal=9.dp,vertical=6.dp)) }
    // No play triangle: these supplied photos are not playable videos.
    IconButton(onClick={onInfo(c)},modifier=Modifier.align(Alignment.Center).size(60.dp).background(ink.copy(alpha=.3f),CircleShape).semantics {contentDescription="데모 콘텐츠 정보"}) { Glyph("info",Modifier.size(28.dp),Color.White) }
    Column(Modifier.align(Alignment.BottomEnd).padding(end=9.dp,bottom=108.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {

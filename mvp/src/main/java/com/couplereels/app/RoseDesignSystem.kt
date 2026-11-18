@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -113,7 +114,7 @@ private val iconPaths=mapOf(
  Row(Modifier.fillMaxWidth().background(cream,RoundedCornerShape(topStart=20.dp,topEnd=20.dp)).navigationBarsPadding().padding(top=5.dp,bottom=3.dp)) {
   listOf("발견" to "home","취향" to "heart","보관함" to "bookmark","우리" to "people").forEach { (title,icon) ->
    val active=page==title
-   Column(Modifier.weight(1f).selectable(active,role=Role.Tab,onClick={onPage(title)}).padding(vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) { Glyph(icon,Modifier.size(25.dp),if(active) pink else ink,active && icon!="people"); Text(title,color=if(active) roseDeep else ink,fontSize=12.sp,fontWeight=if(active) FontWeight.Bold else FontWeight.Normal) }
+   Column(Modifier.weight(1f).selectable(active,role=Role.Tab,onClick={onPage(title)}).testTag("tab-$title").padding(vertical=7.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(3.dp)) { Glyph(icon,Modifier.size(25.dp),if(active) pink else ink,active && icon!="people"); Text(title,color=if(active) roseDeep else ink,fontSize=12.sp,fontWeight=if(active) FontWeight.Bold else FontWeight.Normal) }
   }
  }
 }

@@ -11,26 +11,28 @@ import org.junit.rules.ExternalResource
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.LooperMode
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [35], qualifiers = "w360dp-h800dp")
+@LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
+@Config(sdk = [35])
 class UiIntegrationTest {
  @get:Rule(order = 0) val reset = object : ExternalResource() {
   override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(DemoStore.NAME, Context.MODE_PRIVATE).edit().clear().commit() }
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MvpActivity>()
- private fun click(text: String) { val node = ui.onNodeWithText(text, useUnmergedTree = true); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
+ private fun click(text: String) { val node = if (text in listOf("발견","취향","보관함","우리")) ui.onNodeWithTag("tab-$text") else ui.onNodeWithText(text); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
  private fun enter() { click("로그인 없이 체험하기") }
  @Test fun onboardingLeadsToPersonalizedFeedAndAllTabs() {
   enter()
   ui.onNodeWithTag("onboarding-next").assertIsNotEnabled()
-  click("향수"); click("다음"); click("실버"); click("취향 저장하고 시작하기")
-  ui.onNodeWithText("내 취향 추천").assertExists()
-  ui.onNodeWithText("데모 콘텐츠").assertExists()
+  click("주얼리"); click("다음"); click("실버"); click("취향 저장하고 시작하기")
+  ui.onNodeWithTag("discover-pager").assertExists()
+  ui.onNodeWithText("데모 콘텐츠 · 영상 미제공").assertExists()
   click("취향"); ui.onNodeWithText("내 취향").assertExists()
   click("보관함"); ui.onNodeWithText("아직 이곳에 담긴 릴스가 없어요").assertExists()
-  click("우리"); click("내 취향 추천 보기")
-  ui.onNodeWithText("내 취향 추천").assertExists()
+  click("우리"); click("나중에 연결할게요")
+  ui.onNodeWithTag("discover-pager").assertExists()
  }
  @Test fun imageWithoutLinkAndCancellationNeverSave() {
   enter(); click("나중에 할게요")

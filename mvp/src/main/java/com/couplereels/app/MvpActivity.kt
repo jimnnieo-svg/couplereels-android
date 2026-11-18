@@ -85,6 +85,7 @@ class MvpActivity : ComponentActivity() {
   var noticeDialog by remember { mutableStateOf<String?>(null) }
   var removeUrl by remember { mutableStateOf<String?>(null) }
   var showingUrlInput by rememberSaveable { mutableStateOf(false) }
+  var linkInputError by remember { mutableStateOf("") }
   var moreTags by rememberSaveable { mutableStateOf(false) }
   val active = state.isDemo || state.user != null
   val currentUid = if (state.isDemo) "guest-p06" else state.user?.uid
@@ -223,10 +224,6 @@ class MvpActivity : ComponentActivity() {
      } else when (page) {
       "취향" -> {
        TasteContent(state, onEdit = { tags = state.myTaste.tags; step = 1 }, onGifts = { tags = state.myTaste.tags; step = 2 }, onOpen = { previewUrl = it.url }, onShare = { showingUrlInput = !showingUrlInput })
-       if (showingUrlInput) {
-        OutlinedTextField(link, { link = it; shareError = null }, label = { Text("Instagram Reel 링크 직접 입력") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("share-url"))
-        Primary("링크 확인", !busy) { val valid = ReelUrl.normalize(link); if (valid == null) message = "올바른 개별 Instagram Reel 링크를 입력해 주세요." else { sheet = valid; incoming = valid; shareTags = emptySet(); shareSaveError = ""; showingUrlInput = false } }
-       }
       }
       "보관함" -> {
        Heading("보관함", "마음에 남은 릴스를 모아봤어요")
@@ -290,13 +287,17 @@ class MvpActivity : ComponentActivity() {
     TextButton(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { dismissShare() }) { Text("취소") }
    }
   }
+  if (showingUrlInput) AlertDialog(onDismissRequest = { showingUrlInput = false; linkInputError = "" }, title = { Text("릴스 링크 담기") }, text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+   OutlinedTextField(link, { link = it; linkInputError = "" }, label = { Text("Instagram Reel 링크") }, singleLine = true, isError = linkInputError.isNotEmpty(), modifier = Modifier.fillMaxWidth().testTag("share-url"))
+   if(linkInputError.isNotEmpty()) Text(linkInputError,color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodySmall)
+  } }, confirmButton = { TextButton(enabled=!busy,onClick = { val valid = ReelUrl.normalize(link); if(valid==null) linkInputError="올바른 개별 Instagram Reel 링크를 입력해 주세요." else { sheet=valid; incoming=valid; shareTags=emptySet(); shareSaveError=""; showingUrlInput=false; linkInputError="" } }) { Text("링크 확인") } }, dismissButton = { TextButton(onClick = { showingUrlInput=false; linkInputError="" }) { Text("취소") } })
   infoDemo?.let { c -> AlertDialog(onDismissRequest = { infoDemo = null }, title = { Text(c.title) }, text = { Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { Text("데모 콘텐츠 · 영상 미제공", color = roseDeep, fontWeight = FontWeight.Bold); Text(c.description); Text("제공된 UI 시안의 예시 사진이에요. 실제 Instagram 영상이나 검색 결과가 아니에요."); Text("내 취향과 맞는 이유: " + (state.myTaste.tags intersect c.tags).joinToString(" · ") { labels[it] ?: it }.ifEmpty { "새로운 취향 탐색" }) } }, confirmButton = { TextButton(onClick = { infoDemo = null; page = "취향"; showingUrlInput = true }) { Text("실제 릴스 링크 담기") } }, dismissButton = { TextButton(onClick = { infoDemo = null }) { Text("닫기") } }) }
   noticeDialog?.let { notice -> AlertDialog(onDismissRequest = { noticeDialog = null }, title = { Text("안내") }, text = { Text(notice) }, confirmButton = { TextButton(onClick = { noticeDialog = null }) { Text("확인") } }) }
   removeUrl?.let { url -> AlertDialog(onDismissRequest = { removeUrl = null }, title = { Text("보관함에서 삭제할까요?") }, text = { Text("저장한 링크를 보관함에서 지워요. 취향 선택은 유지돼요.") }, confirmButton = { TextButton(onClick = { removeUrl = null; action(success = { if(previewUrl == url) previewUrl = null }) { repo.removeSaved(url); "보관함에서 삭제했어요." } }) { Text("삭제") } }, dismissButton = { TextButton(onClick = { removeUrl = null }) { Text("취소") } }) }
   classifyUrl?.let { target -> AlertDialog(onDismissRequest = { classifyUrl = null }, title = { Text("후보 태그 편집") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text("영상 내용을 직접 확인하고 분류해 주세요. 이 기기에만 저장돼요."); Text(target, style = MaterialTheme.typography.bodySmall); Tags(tagVocabulary, classifyTags) { classifyTags = classifyTags.toggle(it) } } }, confirmButton = { TextButton(onClick = { catalog.value = CandidateCatalog(state.user?.uid, catalog.value.items.map { if (it.url == target) it.copy(tags = classifyTags) else it }); prefs.edit().putString("$owner:catalog", json.encodeToString(catalog.value.items)).apply(); classifyUrl = null; message = "후보 태그를 저장했어요." }) { Text("분류 저장") } }, dismissButton = { TextButton(onClick = { classifyUrl = null }) { Text("취소") } }) }
   if (unlinkConfirm) AlertDialog(onDismissRequest = { unlinkConfirm = false }, title = { Text("커플 연결을 해제할까요?") }, text = { Text("서로의 추천 정보 접근이 종료돼요. 내 취향과 보관함은 유지돼요.") }, confirmButton = { TextButton(enabled = !busy, onClick = { unlinkConfirm = false; action { repo.unlink(); "연결을 해제했어요." } }) { Text("연결 해제") } }, dismissButton = { TextButton(onClick = { unlinkConfirm = false }) { Text("취소") } })
   if (diagnostics && BuildConfig.DEBUG) AlertDialog(onDismissRequest = { diagnostics = false }, title = { Text("재생 검증 도구") }, text = { Text("P0-1의 독립 재생 검증 화면을 열어요.") }, confirmButton = { TextButton(onClick = { diagnostics = false; startActivity(ReelIntents.playback(this@MvpActivity, null)) }) { Text("검증 화면 열기") } }, dismissButton = { TextButton(onClick = { diagnostics = false }) { Text("닫기") } })
-  BackHandler(enabled = sheet.isBlank() && !diagnostics && classifyUrl == null && !unlinkConfirm && infoDemo == null && noticeDialog == null && removeUrl == null && (registering || settings || previewUrl != null || step > 0 || (active && page != "발견"))) {
+  BackHandler(enabled = sheet.isBlank() && !showingUrlInput && !diagnostics && classifyUrl == null && !unlinkConfirm && infoDemo == null && noticeDialog == null && removeUrl == null && (registering || settings || previewUrl != null || step > 0 || (active && page != "발견"))) {
    when {
     previewUrl != null -> previewUrl = null
     settings -> settings = false

@@ -14,8 +14,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.LooperMode
 
 @RunWith(RobolectricTestRunner::class)
+@LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
 @Config(sdk = [35])
 class ProbeExportUiTest {
  @get:Rule(order = 0) val reset = object : ExternalResource() {
