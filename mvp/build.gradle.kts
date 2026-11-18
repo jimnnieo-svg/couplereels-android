@@ -8,7 +8,7 @@ plugins {
 android {
  namespace = "com.couplereels.mvp"
  compileSdk = 35
- defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 7; versionName = "0.7-ui"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+ defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 8; versionName = "0.8-library"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
  testOptions { unitTests.isIncludeAndroidResources = true }
  buildFeatures { compose = true; buildConfig = true }
  sourceSets { getByName("main") { java.srcDir("../app/src/main/java"); res.srcDir("../app/src/main/res") }; getByName("test").java.srcDir("../app/src/test/java") }

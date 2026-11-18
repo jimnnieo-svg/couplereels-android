@@ -19,8 +19,8 @@ import kotlinx.coroutines.delay
 /** An explicit, allowed web embed attempt, never a claimed playback success. */
 @OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("SetJavaScriptEnabled")
-@Composable internal fun ReelPreview(url: String, modifier: Modifier, onExternal: () -> Unit, onCopy: () -> Unit) {
- var attempted by remember(url) { mutableStateOf(false) }
+@Composable internal fun ReelPreview(url: String, modifier: Modifier, onExternal: () -> Unit, onCopy: () -> Unit, autoAttempt: Boolean = false) {
+ var attempted by remember(url) { mutableStateOf(autoAttempt) }
  var status by remember(url) { mutableStateOf("Instagram의 공개 릴스를 열어볼 수 있어요.") }
  var failed by remember(url) { mutableStateOf(false) }
  var web by remember(url) { mutableStateOf<WebView?>(null) }
@@ -43,7 +43,7 @@ import kotlinx.coroutines.delay
     webViewClient = object : WebViewClient() {
      override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean = !ReelUrl.allowedNavigation(request.url.toString())
      override fun onPageFinished(view: WebView, loaded: String) { if (!failed) status = "영상이 보이지 않으면 아래에서 Instagram을 열어주세요." }
-     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) { failed = true; status = "콘텐츠를 불러오지 못했어요. 인터넷 연결을 확인하거나 Instagram에서 열어주세요." }
+     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) { if (request.isForMainFrame) { failed = true; status = "콘텐츠를 불러오지 못했어요. 인터넷 연결을 확인하거나 Instagram에서 열어주세요." } }
      override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) { if (request.isForMainFrame) { failed = true; status = "Instagram 콘텐츠 제한 (HTTP ${response.statusCode}). 아래에서 원본을 열어주세요." } }
      override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) { handler.cancel(); failed = true; status = "보안 연결 오류로 중단했어요." }
      override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean { web = null; view.destroy(); attempted = false; status = "재생 화면이 종료됐어요. 다시 시도해 주세요."; return true }

@@ -59,9 +59,10 @@ class MvpActivity : ComponentActivity() {
  override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); receive(intent) }
  private fun receive(i: Intent) {
   if (i.action != Intent.ACTION_SEND) return
-  val url = ReelIntents.sharedUrl(i)
-  if (url == null) { incoming = ""; shareError = "릴스 링크를 받지 못했어요. Instagram에서 개별 릴스 링크를 복사해 주세요." }
-  else { shareError = null; incoming = url }
+  // Compatibility for explicit old share targets; Android's share menu uses the receiver directly.
+  startActivity(Intent(i).setClass(this, ShareReceiverActivity::class.java).setFlags(0))
+  incoming = ""; shareError = null
+  setIntent(Intent(this,MvpActivity::class.java).setAction(Intent.ACTION_MAIN))
  }
  private fun external(url: String, error: (String) -> Unit) {
   val canonical = ReelUrl.normalize(url)
@@ -73,6 +74,10 @@ class MvpActivity : ComponentActivity() {
  @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
  @Composable private fun App() {
   var demoMode by remember { mutableStateOf(demoStore.active) }
+  if (demoMode) {
+   P08Root(onExit = { demoMode = false }, onProbe = { startActivity(ReelIntents.playback(this@MvpActivity, null)) })
+   return
+  }
   val real = !demoMode && firebaseAvailable
   val repo: CoupleRepository = remember(demoMode, real) {
    if (demoMode) DemoRepository(demoStore.load(), demoStore::save)
