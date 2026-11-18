@@ -18,6 +18,7 @@ import java.io.File
 
 /** Run only on the dedicated disposable emulator. Uses explicit local QA fixtures. */
 @RunWith(AndroidJUnit4::class)
+@OptIn(ExperimentalTestApi::class)
 class P07ScreenshotsTest {
  @get:Rule(order=0) val fixture=object:ExternalResource() {
   override fun before() {
@@ -64,7 +65,7 @@ class P07ScreenshotsTest {
   click("보관함"); capture("03-saved")
   click("우리"); capture("04-us")
   ui.runOnUiThread {deliverShareForScenario(ui.activity,Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,ReelUrl.candidates[0]))}
-  ui.waitForIdle(); click("실버"); capture("06-share-sheet")
+  ui.waitForIdle(); ui.onAllNodesWithText("실버").onLast().performClick(); capture("06-share-sheet")
   click("취소"); assertEquals(2,DemoStore(ui.activity).load().saved.size)
  }
 }
