@@ -55,13 +55,14 @@ import java.util.Locale
  var settings by rememberSaveable {mutableStateOf(false)}
  var busy by remember {mutableStateOf(false)}
  var notice by remember {mutableStateOf("")}
+ var operationError by remember {mutableStateOf<String?>(null)}
  var input by rememberSaveable {mutableStateOf<String?>(null)}
  var inputError by remember {mutableStateOf("")}
  var editing by remember(person) {mutableStateOf<LocalReel?>(null)}
  var removing by remember(person) {mutableStateOf<LocalReel?>(null)}
  var collectionEditor by remember(person) {mutableStateOf(false)}
  val feedPartner=profile.partnerFeed
- fun runJob(done:()->Unit={},work:()->Unit) {if(busy)return;scope.launch {busy=true;try {withContext(Dispatchers.IO){work()};done()}catch(e:Exception){notice=e.message?:"저장하지 못했어요. 다시 시도해 주세요."}finally{busy=false}}}
+ fun runJob(done:()->Unit={},work:()->Unit) {if(busy)return;scope.launch {busy=true;try {withContext(Dispatchers.IO){work()};done()}catch(e:CancellationException){throw e}catch(e:Exception){operationError=e.message?:"저장하지 못했어요. 다시 시도해 주세요."}finally{busy=false}}}
  fun open(url:String) {runCatching {context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))}.onFailure {notice="Instagram을 열 수 없어요. 링크를 복사해 주세요."}}
  fun copy(url:String) {(context.getSystemService(ClipboardManager::class.java)).setPrimaryClip(ClipData.newPlainText("Instagram Reel",url));notice="링크를 복사했어요."}
  val currentReel=profile.reels.find {it.url==detail}
@@ -109,6 +110,7 @@ import java.util.Locale
       val reel=reels[index]
       Column(Modifier.fillMaxSize().padding(horizontal=16.dp,vertical=8.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {Text("${index+1} / ${reels.size}",color=muted);Text(if(feedPartner)"직접 공유한 릴스" else reel.sharing.title,color=roseDeep,fontSize=12.sp)}
+       Text(reel.url,Modifier.testTag("feed-url-${reel.url.substringAfter("/reel/").trimEnd('/')}") ,fontSize=11.sp,color=muted,maxLines=1,overflow=TextOverflow.Ellipsis)
        if(index==pager.currentPage)ReelPreview(reel.url,Modifier.weight(1f).fillMaxWidth(),{open(reel.url)},{copy(reel.url)},autoAttempt=true)
        else ReelPlaceholder(reel,Modifier.weight(1f).fillMaxWidth())
        Text(reel.categories.mapNotNull {id->s.profile(reel.owner).collections.find {it.id==id}?.name}.joinToString(" · "),color=muted,fontSize=12.sp)
@@ -148,6 +150,7 @@ import java.util.Locale
  editing?.let {reel->ReelEditor(reel,profile,onDismiss={editing=null},onSave={cats,tags->runJob({editing=null}){store.edit(person,reel.url,cats,tags)}})}
  removing?.let {reel->AlertDialog(onDismissRequest={removing=null},title={Text("이 릴스를 삭제할까요?")},text={Text("보관함과 내 취향 피드에서 삭제해요.")},confirmButton={TextButton(onClick={runJob({removing=null;detail=null}){store.remove(person,reel.url)}}){Text("삭제")}},dismissButton={TextButton(onClick={removing=null}){Text("취소")}})}
  if(collectionEditor)CollectionEditor(profile,{collectionEditor=false},onAdd={name->runJob {store.addCollection(person,name)}},onRename={id,name->runJob {store.renameCollection(person,id,name)}},onRemove={id->runJob {store.removeCollection(person,id)}})
+ operationError?.let {error->AlertDialog(onDismissRequest={operationError=null},title={Text("확인해 주세요")},text={Text(error)},confirmButton={TextButton(onClick={operationError=null}){Text("확인")}})}
  BackHandler(input==null&&editing==null&&removing==null&&!collectionEditor&&(detail!=null||step>0||settings||page!="발견")) {when {detail!=null->detail=null;step==2->step=1;step==1->step=0;settings->settings=false;else->page="발견"}}
 }
 
@@ -181,7 +184,29 @@ internal fun classificationLabel(reel:LocalReel)=when(reel.classification){Class
  AlertDialog(onDismissRequest=onDismiss,title={Text("카테고리·태그")},text={Column(Modifier.verticalScroll(rememberScrollState())) {FlowRow(horizontalArrangement=Arrangement.spacedBy(5.dp)){profile.collections.forEach {c->FilterChip(c.id in cats,{cats=if(c.id in cats)cats-c.id else cats+c.id},label={Text(c.name)})}};Text("취향 태그",fontWeight=FontWeight.Bold);Tags(tagVocabulary,tags){tags=if(it in tags)tags-it else tags+it}}},confirmButton={TextButton(onClick={onSave(cats,tags)}){Text("저장")}},dismissButton={TextButton(onClick=onDismiss){Text("취소")}})
 }
 @Composable private fun CollectionEditor(profile:LocalProfile,onDismiss:()->Unit,onAdd:(String)->Unit,onRename:(String,String)->Unit,onRemove:(String)->Unit) {
- var chosen by remember{mutableStateOf<String?>(null)};var name by remember{mutableStateOf("")};var delete by remember{mutableStateOf<String?>(null)}
- AlertDialog(onDismissRequest=onDismiss,title={Text("컬렉션 관리")},text={Column(Modifier.verticalScroll(rememberScrollState())) {OutlinedTextField(name,{name=it},label={Text(if(chosen==null)"새 컬렉션 이름" else "컬렉션 이름")});Row {TextButton(onClick={if(chosen==null)onAdd(name) else onRename(chosen!!,name);name="";chosen=null},enabled=name.isNotBlank()){Text(if(chosen==null)"추가" else "이름 저장")};if(chosen!=null)TextButton(onClick={chosen=null;name=""}){Text("취소")}};profile.collections.filter {it.id!="unclassified"}.forEach {c->Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Text(c.name,Modifier.weight(1f));TextButton(onClick={chosen=c.id;name=c.name}){Text("수정")};TextButton(onClick={delete=c.id}){Text("삭제")}}}},confirmButton={TextButton(onClick=onDismiss){Text("닫기")}})
+ var chosen by remember { mutableStateOf<String?>(null) }
+ var name by remember { mutableStateOf("") }
+ var delete by remember { mutableStateOf<String?>(null) }
+ AlertDialog(
+  onDismissRequest=onDismiss,
+  title={Text("컬렉션 관리")},
+  text={
+   Column(Modifier.verticalScroll(rememberScrollState())) {
+    OutlinedTextField(name,{name=it},label={Text(if(chosen==null)"새 컬렉션 이름" else "컬렉션 이름")})
+    Row {
+     TextButton(onClick={if(chosen==null)onAdd(name) else onRename(chosen!!,name);name="";chosen=null},enabled=name.isNotBlank()){Text(if(chosen==null)"추가" else "이름 저장")}
+     if(chosen!=null)TextButton(onClick={chosen=null;name=""}){Text("취소")}
+    }
+    profile.collections.filter {it.id!="unclassified"}.forEach {c->
+     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+      Text(c.name,Modifier.weight(1f))
+      TextButton(onClick={chosen=c.id;name=c.name}){Text("수정")}
+      TextButton(onClick={delete=c.id}){Text("삭제")}
+     }
+    }
+   }
+  },
+  confirmButton={TextButton(onClick=onDismiss){Text("닫기")}}
+ )
  delete?.let {id->AlertDialog(onDismissRequest={delete=null},title={Text("컬렉션을 삭제할까요?")},text={Text("릴스는 삭제하지 않아요. 다른 카테고리가 없으면 미분류로 옮겨요.")},confirmButton={TextButton(onClick={onRemove(id);delete=null;chosen=null;name=""}){Text("삭제")}},dismissButton={TextButton(onClick={delete=null}){Text("취소")}})}
 }

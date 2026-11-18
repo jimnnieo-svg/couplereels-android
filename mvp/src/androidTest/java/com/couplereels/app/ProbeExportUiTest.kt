@@ -16,7 +16,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 @RunWith(AndroidJUnit4::class)
 class ProbeExportUiTest {
  @get:Rule(order = 0) val reset = object : ExternalResource() {
-  override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("probe", Context.MODE_PRIVATE).edit().clear().commit() }
+  override fun before() {
+   check(androidx.test.platform.app.InstrumentationRegistry.getArguments().getString("p08Disposable")=="true" && android.os.Build.HARDWARE in setOf("ranchu","goldfish")) {"Disposable emulator only"}
+   ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("probe", Context.MODE_PRIVATE).edit().clear().commit()
+  }
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MainActivity>()
  @Test fun manuallyUnverifiedPlaybackResultCanBeExportedWithoutClaimingSuccess() {
