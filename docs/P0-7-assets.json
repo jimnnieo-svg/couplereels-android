@@ -1,0 +1,121 @@
+{
+  "assets": {
+    "p07_silver": {
+      "source": "05_Onboarding_Taste_Step2.png",
+      "region": [
+        120,
+        635,
+        365,
+        805
+      ],
+      "sourceSha256": "d0020fbed6b4e0d79778afbf028abf238abd401fb5c4e7c2ee9fd24c53d9a2cc",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_gold": {
+      "source": "05_Onboarding_Taste_Step2.png",
+      "region": [
+        470,
+        635,
+        771,
+        800
+      ],
+      "sourceSha256": "d0020fbed6b4e0d79778afbf028abf238abd401fb5c4e7c2ee9fd24c53d9a2cc",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_minimal": {
+      "source": "05_Onboarding_Taste_Step2.png",
+      "region": [
+        120,
+        907,
+        365,
+        1074
+      ],
+      "sourceSha256": "d0020fbed6b4e0d79778afbf028abf238abd401fb5c4e7c2ee9fd24c53d9a2cc",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_bold": {
+      "source": "05_Onboarding_Taste_Step2.png",
+      "region": [
+        470,
+        907,
+        772,
+        1074
+      ],
+      "sourceSha256": "d0020fbed6b4e0d79778afbf028abf238abd401fb5c4e7c2ee9fd24c53d9a2cc",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_necklace": {
+      "source": "02_My_Taste.png",
+      "region": [
+        108,
+        1095,
+        428,
+        1278
+      ],
+      "sourceSha256": "4e0f293336d75ba1ee7bfe0bc10fd14a65491d5b1ee13b529047c6d23e0fbec6",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_perfume": {
+      "source": "02_My_Taste.png",
+      "region": [
+        458,
+        1105,
+        773,
+        1278
+      ],
+      "sourceSha256": "4e0f293336d75ba1ee7bfe0bc10fd14a65491d5b1ee13b529047c6d23e0fbec6",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_cafe": {
+      "source": "03_Saved.png",
+      "region": [
+        524,
+        638,
+        782,
+        929
+      ],
+      "sourceSha256": "97a7d0c642d94751d6b81cfbb564f7008a297246111b49a4d33baebf68b262ce",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_travel": {
+      "source": "03_Saved.png",
+      "region": [
+        527,
+        1110,
+        781,
+        1379
+      ],
+      "sourceSha256": "97a7d0c642d94751d6b81cfbb564f7008a297246111b49a4d33baebf68b262ce",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_flowers": {
+      "source": "01_Discover_A1_Reels.png",
+      "region": [
+        112,
+        198,
+        815,
+        655
+      ],
+      "sourceSha256": "999aaaa5f6334916d603a587d14a3c89ac44336295745cca11ba2884470245e3",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    },
+    "p07_discover": {
+      "source": "01_Discover_A1_Reels.png",
+      "region": [
+        185,
+        830,
+        716,
+        1295
+      ],
+      "sourceSha256": "999aaaa5f6334916d603a587d14a3c89ac44336295745cca11ba2884470245e3",
+      "purpose": "Editorial demo/style image; never a claimed Instagram thumbnail"
+    }
+  },
+  "sampledColors": {
+    "ivory": "#FEF6F6",
+    "rose": "#D08298",
+    "selected": "#F9DEE4",
+    "text": "#281517",
+    "border": "#F2E2E5"
+  }
+}

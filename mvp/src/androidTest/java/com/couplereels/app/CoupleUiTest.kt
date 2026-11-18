@@ -10,13 +10,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
-import org.robolectric.annotation.LooperMode
+import androidx.test.ext.junit.runners.AndroidJUnit4
 
-@RunWith(RobolectricTestRunner::class)
-@LooperMode(LooperMode.Mode.INSTRUMENTATION_TEST)
-@Config(sdk = [35])
+@RunWith(AndroidJUnit4::class)
 class CoupleUiTest {
  @get:Rule(order = 0) val reset = object : ExternalResource() {
   override fun before() { ApplicationProvider.getApplicationContext<Context>().getSharedPreferences(DemoStore.NAME, Context.MODE_PRIVATE).edit().clear().commit() }

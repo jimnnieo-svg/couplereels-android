@@ -1,0 +1,60 @@
+CoupleReels P0-7 — approved seven-screen implementation
+Design source: CoupleReels_최종_UI_시안_7장.zip supplied by the user, 2026-11-18.
+Baseline: feature/p0-6-demo-20261115 / 689b7f7858e1bd33e1185cf753f225ce5c0b38bd.
+
+Design contract
+00: centered ring wordmark, 1/2 progress, native two-column interest checkboxes, privacy note, next/skip.
+01: edge-to-edge photographic vertical pager, compact brand, three working reactions, demo disclosure.
+02: taste and gift cards with selected chips/editing, two-column shared links, privacy and URL entry.
+03: tag-based filters and two-column saved content, separate demo badges and real URL entries.
+04: two unlinked avatars, connection/code/settings controls with honest unavailable-service explanation.
+05: 2/2 progress, photographic style choices, interest-specific sections, optional gift tags, save.
+06: rounded native bottom sheet, link summary, selectable tags, privacy, save/cancel.
+
+Tokens and accessibility
+Sampled ivory #FEF6F6, rose #D08298, selection #F9DEE4, border #F2E2E5.
+Readable foregrounds: #362A2B, secondary #786C6E, deeper action rose #B85373.
+Native Compose typography, shapes (12/20/28dp), line icons, clickable/toggleable controls.
+Interactive targets generally at least 48dp. Main content and sheets scroll when height is constrained.
+The app handles system bars, keyboard insets and back navigation. Launch icon is unchanged.
+
+Photos and truthfulness
+Only clean photographic rectangles are extracted from supplied mockups; see P0-7-assets.json.
+No full-screen screenshot, baked text, button, checkbox or navigation image is used as a screen.
+All screen chrome, typography, decorations, cards and controls are native Compose elements.
+Demo photos have no invented Instagram URLs or video playback. The center control is an information
+button rather than a play triangle, because these assets contain no playable video.
+Actual saved URLs use explicitly labelled tag illustrations, not claimed original thumbnails.
+Original URLs remain accessible through the existing official embed/external/copy controls.
+No scraping, media downloading or external service bypass is implemented.
+
+Data compatibility
+Package remains com.couplereels.mvp; versionCode 7, versionName 0.7-ui; same debug signing configuration.
+DemoStore.NAME, the P0-6 snapshot schema, Domain models, and Firebase repository are unchanged.
+Taste/gift editing uses the existing tag vocabulary and P0-6 persistence operations.
+The additional couplereels-demo-content-p07-v1 preferences store only editorial demo IDs in
+liked/bookmarked/hidden sets. They never create account identities or counterfeit saved Reel URLs.
+They are guest-only UI interactions; the account repository does not receive these demo reactions.
+Existing user data and launch icon must not be deleted to resolve an installation conflict.
+
+Testing
+Domain/storage tests remain testDebugUnitTest. Six Compose UI cases are androidTest tests run on
+an explicitly addressed disposable emulator, using AndroidJUnitRunner. They clear test fixtures.
+Do not run connectedDebugAndroidTest against all connected devices: it could affect the user's phone.
+Use adb -s <dedicated emulator> install and am instrument with com.couplereels.mvp.test runner.
+Robolectric Compose was unsuitable here: PAUSED previously stalled at ActivityScenario.close;
+INSTRUMENTATION_TEST exposed Espresso's main-thread conflict. The tests were moved, not disabled.
+Reference: https://robolectric.org/javadoc/4.13/org/robolectric/annotation/LooperMode.Mode.html
+
+Delivery constraints
+Preserve P0-6 APK and its 97c6f4b3cc1a260058805cac4efc9a384f91dbc2b2f22d15b8d07ca1e161027a hash.
+Delivery filename: CoupleReels-P0-7-UI-debug.apk. Never overwrite an existing different APK silently.
+The user's presentation Galaxy P0-6 installation needs explicit advance approval before update.
+No main branch changes, forced pushes, Firebase production writes or GitHub Actions are required.
+
+Expected differences from a static mockup
+Actual saved data, filters and tag counts are dynamic. Empty states do not invent saved user content.
+No fake profile photo, notification badge, connected partner or successful authentication is shown.
+Content photo crops and Android font rendering differ from the composite phone-frame mockups.
+OS navigation style and physical safe areas are supplied by Android, not drawn as fake status bars.
+Runtime screenshot comparisons, build results and remaining issues are recorded separately at delivery.

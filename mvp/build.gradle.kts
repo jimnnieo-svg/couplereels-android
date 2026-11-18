@@ -8,14 +8,14 @@ plugins {
 android {
  namespace = "com.couplereels.mvp"
  compileSdk = 35
- defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 7; versionName = "0.7-ui" }
+ defaultConfig { applicationId = "com.couplereels.mvp"; minSdk = 26; targetSdk = 35; versionCode = 7; versionName = "0.7-ui"; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
  testOptions { unitTests.isIncludeAndroidResources = true }
  buildFeatures { compose = true; buildConfig = true }
  sourceSets { getByName("main") { java.srcDir("../app/src/main/java"); res.srcDir("../app/src/main/res") }; getByName("test").java.srcDir("../app/src/test/java") }
  compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
  kotlinOptions { jvmTarget = "17" }
 }
-// Missing client config must not prevent the local Fake build.
+// Missing Firebase configuration must not prevent a device-local demo build.
 tasks.matching { it.name.contains("GoogleServices") }.configureEach { enabled = file("google-services.json").exists() }
 dependencies {
  implementation(platform("androidx.compose:compose-bom:2025.02.00"))
@@ -34,4 +34,8 @@ dependencies {
  testImplementation("androidx.compose.ui:ui-test-junit4")
  debugImplementation("androidx.compose.ui:ui-test-manifest")
  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+ androidTestImplementation(platform("androidx.compose:compose-bom:2025.02.00"))
+ androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+ androidTestImplementation("androidx.test.ext:junit:1.2.1")
+ androidTestImplementation("androidx.test:runner:1.6.2")
 }
