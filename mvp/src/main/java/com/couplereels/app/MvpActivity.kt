@@ -70,7 +70,7 @@ class MvpActivity : ComponentActivity() {
    .onFailure { error("Instagram 링크를 열 앱이 없어요. 링크를 복사해서 브라우저에 붙여넣어 주세요.") }
  }
 
- @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class)
+ @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
  @Composable private fun App() {
   var demoMode by remember { mutableStateOf(demoStore.active) }
   val real = !demoMode && firebaseAvailable
