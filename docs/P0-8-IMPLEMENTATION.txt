@@ -1,0 +1,41 @@
+CoupleReels P0-8
+Baseline: bd1ac621c4bccafa88d61633b3d08319573c97fe; branch feature/p0-8-library-20261119.
+
+Data and privacy contract
+- LocalLibrary stores a versioned document in couplereels-library-p08-v1. ME/PARTNER are local personas, not Firebase accounts.
+- The existing P0-6/P0-7 guest snapshot is copied into ME exactly once. Old preferences, package and launcher icon are untouched. Imported historical entries have unknown save time, rather than a fabricated date.
+- A deleted migrated URL is not reimported. Invalid/corrupt new storage fails visibly instead of overwriting it with empty state.
+- Each profile has independent taste, reels, categories, default sharing and selected discovery segment. Current profile is durable.
+- SIMILAR is the default, including migrated originals. Changing defaults only affects future saves. Duplicates retain prior individual settings.
+- partnerView() returns only DIRECT originals plus an awaitingSimilar boolean. SIMILAR URLs/captions/thumbnails are not supplied to the partner UI or WebView.
+- No similar-content provider is configured. Similar mode displays the honest unavailable result; it never recycles the original as a recommendation.
+
+One-tap share
+- Exported ShareReceiverActivity accepts ACTION_SEND text/plain and image/* containing a valid textual Reel URL. It extracts EXTRA_TEXT, subject and textual ClipData without opening image/content URIs.
+- First commit normalizes and saves the link to the currently selected local profile. Completion toast and finish return to the calling activity. No tag prompt or automatic WebView is part of saving.
+- Classification is a separate retryable IO job. Process termination after the first commit leaves a saved PENDING item, retried at next app load. Manual edits/deletion win over classification.
+- Classification uses only keywords in the actual shared caption, after removing URLs. It is RULE-BASED, not AI/ML. URL-only content remains unclassified.
+- No scraping, unofficial media downloads, external AI uploads, new API keys or Firebase projects.
+- Canonical /reel/ and /reels/ HTTPS URLs normalize query/tracking parameters. Opaque /share/reel/... redirects are not treated as video shortcodes; ask for the individual reel link instead.
+
+UI
+- Ivory/rose branding and four tabs, native interest onboarding and the hidden P0-1 probe are retained.
+- Library: actual 3-column portrait grid, search, horizontally scrolling categories, collection counts, add/rename/remove, multi-category/tag editor, date order and deletion.
+- Without a permitted thumbnail source, every original uses an explicit unavailable-thumbnail placeholder. No unrelated demo photo represents an original.
+- Discovery: current-profile originals and the other local profile's DIRECT originals in separate vertical pagers. No editorial demo cards are mixed in. Source-only empty states and an unavailable-similar message are explicit.
+- Local taste matching ranks already saved URLs and is labelled accordingly; it is not new Instagram search/recommendation.
+- Official embed is attempted only in discovery/detail, with external Instagram fallback. Page-load completion is never recorded as playback success.
+- Production couple-account sync is not implemented in this local experience. Existing authentication/backend code is preserved and not configured.
+
+Testing and device safety
+- LocalLibraryTest covers one-time migration, durable-before-classification save, caption-only classification, direct revocation/privacy, profile isolation, future-only defaults, edit/delete races, category changes, invalid URLs, duplicate concurrency, corrupt-data preservation and persisted selection.
+- P08LibraryUiTest replaces superseded P0-7 tag-before-save and editorial-feed UI contracts; old tests are retained under docs/history/p07-tests. P0-1 export coverage remains active.
+- Instrumentation fixtures require p08Disposable=true AND emulator hardware. Do not clear a phone's app data. Run only with an explicit owned emulator serial.
+- Physical device tests must preserve preferences and verify signature before adb install -r. Never uninstall to solve a signature conflict.
+- ADB intent tests alone do NOT verify the real Instagram share-menu path or actual video playback.
+
+Primary references checked 2026-11-19 KST
+https://developer.android.com/develop/ui/compose/sharing/receive — ACTION_SEND intent filters and extras.
+https://developers.facebook.com/docs/graph-api/reference/instagram-oembed/ — official oEmbed API/token/permission surface; not configured here.
+
+The requested three new reference photos were not present in the supplied attachment directory. The explicit layout requirements and existing P0-7 brand assets were used.

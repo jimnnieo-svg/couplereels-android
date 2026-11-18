@@ -77,7 +77,7 @@ class LocalLibrary(context: Context, private val clock: () -> Long = System::cur
   val profile=state.value.profile(person)
   profile.reels.find {it.url==url}?.let {return SaveReceipt(it,true)}
   val reel=LocalReel(url,person,clock(),sharing=profile.defaultSharing,caption=CaptionRules.caption(shared))
-  update {s->s.withProfile(person,s.profile(person).copy(reels=listOf(reel)+s.profile(person).reels))}
+  update {s->s.withProfile(person,s.profile(person).copy(reels=listOf(reel)+s.profile(person).reels,partnerFeed=false))}
   return SaveReceipt(reel,false)
  }
  /** A separate, retryable pass after durable save; manual edits/deletes win races. */
