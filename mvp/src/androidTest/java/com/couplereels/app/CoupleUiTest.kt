@@ -19,7 +19,7 @@ class CoupleUiTest {
  }
  @get:Rule(order = 1) val ui = createAndroidComposeRule<MvpActivity>()
  private fun click(text: String) { val node = if (text in listOf("발견","취향","보관함","우리")) ui.onNodeWithTag("tab-$text") else ui.onNodeWithText(text); runCatching { node.performScrollTo() }; node.performClick(); ui.waitForIdle() }
- private fun share() { ui.runOnUiThread { androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle() }
+ private fun share() { ui.runOnUiThread { deliverShareForScenario(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle() }
  @Test fun shareReceivedBeforeDemoWaitsForOnboardingAndSurvivesRecreation() {
   share(); click("로그인 없이 체험하기")
   ui.onNodeWithTag("share-save").assertDoesNotExist()

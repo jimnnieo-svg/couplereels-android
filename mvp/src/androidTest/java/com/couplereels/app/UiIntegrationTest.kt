@@ -32,10 +32,9 @@ class UiIntegrationTest {
  }
  @Test fun imageWithoutLinkAndCancellationNeverSave() {
   enter(); click("나중에 할게요")
-  val instrumentation = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
-  ui.runOnUiThread { instrumentation.callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("image/jpeg")) }; ui.waitForIdle()
+  ui.runOnUiThread { deliverShareForScenario(ui.activity, Intent(Intent.ACTION_SEND).setType("image/jpeg")) }; ui.waitForIdle()
   ui.onNodeWithTag("share-input-error").assertIsDisplayed()
-  ui.runOnUiThread { instrumentation.callActivityOnNewIntent(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle()
+  ui.runOnUiThread { deliverShareForScenario(ui.activity, Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, ReelUrl.candidates[0])) }; ui.waitForIdle()
   click("실버")
   ui.activityRule.scenario.recreate(); ui.waitForIdle()
   ui.onNodeWithTag("share-sheet-url").assertTextContains(ReelUrl.candidates[0])
