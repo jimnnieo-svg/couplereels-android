@@ -1,11 +1,11 @@
 <resources>
- <style name="P07AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+ <style name="P07BaseTheme" parent="android:style/Theme.Material.Light.NoActionBar">
   <item name="android:fontFamily">sans</item>
   <item name="android:windowBackground">#FEF6F6</item>
   <item name="android:colorAccent">#B85373</item>
   <item name="android:windowLightStatusBar">true</item>
-  <item name="android:windowLightNavigationBar">true</item>
   <item name="android:statusBarColor">#FEF6F6</item>
   <item name="android:navigationBarColor">#FEF6F6</item>
  </style>
+ <style name="P07AppTheme" parent="P07BaseTheme" />
 </resources>

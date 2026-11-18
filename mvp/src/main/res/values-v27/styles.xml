@@ -1,0 +1,5 @@
+<resources>
+ <style name="P07AppTheme" parent="P07BaseTheme">
+  <item name="android:windowLightNavigationBar">true</item>
+ </style>
+</resources>
