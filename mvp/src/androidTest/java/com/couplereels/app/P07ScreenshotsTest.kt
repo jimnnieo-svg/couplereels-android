@@ -55,8 +55,11 @@ class P07ScreenshotsTest {
   val top=ui.onNodeWithContentDescription("알림").fetchSemanticsNode().boundsInRoot.top
   assertTrue("Header must stay below Android status bar after leaving immersive feed",top>=20*ui.activity.resources.displayMetrics.density)
   capture("02-taste")
+  ui.onNodeWithText("릴스 공유하기").performScrollTo(); capture("02-taste-bottom")
   click("취향 수정"); capture("00-onboarding-1")
+  ui.onNodeWithTag("onboarding-next").performScrollTo(); capture("00-onboarding-1-bottom")
   click("다음"); capture("05-onboarding-2")
+  ui.onNodeWithTag("onboarding-next").performScrollTo(); capture("05-onboarding-2-bottom")
   click("취향 저장하고 시작하기")
   click("보관함"); capture("03-saved")
   click("우리"); capture("04-us")
