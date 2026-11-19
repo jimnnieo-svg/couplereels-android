@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+const checks=[];
+const test=(name,fn)=>{fn();checks.push({name,result:'pass'});};
+const html=fs.readFileSync('dist/index.html','utf8');
+const app=fs.readFileSync('src/main.tsx','utf8');
+test('Korean document, SEO, canonical and Open Graph',()=>{assert.match(html,/lang="ko"/);for(const key of ['description','og:title','og:image','canonical'])assert.ok(html.includes(key));});
+test('All built HTML scripts/styles resolve',()=>{for(const m of html.matchAll(/(?:src|href)="(\/[^"#]+)"/g)){assert.ok(fs.existsSync(path.join('dist',m[1])),m[1]);}});
+test('Eight actual public screenshot assets and QR exist',()=>{for(const name of ['share','library','discovery','taste','category','profiles','settings','preview'])assert.ok(fs.statSync(`dist/screens/${name}.webp`).size>1000);assert.ok(fs.statSync('dist/site-qr.png').size>500);assert.ok(fs.existsSync('dist/og.png'));});
+test('Correct Google Drive link and new-tab safeguards',()=>{assert.ok(app.includes('https://drive.google.com/file/d/1jbHYCnVSS88xGnKPRO4TWVbzrYZTAzyv/view?usp=sharing'));assert.match(app,/href=\{APK\} target="_blank" rel="noopener noreferrer"/);assert.ok((app.match(/<Download\/>/g)||[]).length>=2);});
+test('Original APK SHA-256 and honest limitations present',()=>{assert.ok(app.includes('6f25eedbeb2ea2ee595bfbe38eb978e019ea8dd8de63936395ff3b0bcdaa005c'));for(const t of ['아직 비슷한 릴스를 찾지 못했어요','규칙','정식 출시 버전 아님','체험 상대는 실제 계정이 아닙니다'])assert.ok(app.includes(t),t);});
+test('Hosting identity and static directory match',()=>{const m=JSON.parse(fs.readFileSync('.openai/hosting.json'));assert.equal(m.project_id,'appgprj_6afe62ada6a881918fb01d83c4752c9e');assert.equal(m.static.directory,'dist');});
+test('Reduced motion and keyboard-accessible native dialog implemented',()=>{assert.match(fs.readFileSync('src/style.css','utf8'),/prefers-reduced-motion:reduce/);assert.ok(app.includes('<dialog'));assert.ok(app.includes('본문으로 건너뛰기'));});
+console.log(JSON.stringify({checks,passed:checks.length},null,2));
