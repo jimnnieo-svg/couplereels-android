@@ -1,0 +1,131 @@
+[
+  {
+    "source": "CoupleReels_소개사이트_사진소스/01_바이브코딩_사례/01_80억분의1.jpeg",
+    "output": "/story/case-one.webp",
+    "originalSize": [
+      1348,
+      926
+    ],
+    "publicSize": [
+      1050,
+      721
+    ],
+    "treatment": "원본 비율 유지, 크기 최적화"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/01_바이브코딩_사례/02_온라인절.png",
+    "output": "/story/case-temple.webp",
+    "originalSize": [
+      1200,
+      615
+    ],
+    "publicSize": [
+      1050,
+      538
+    ],
+    "treatment": "원본 비율 유지, 크기 최적화"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/01_바이브코딩_사례/03_온라인독서실.png",
+    "output": "/story/case-study.webp",
+    "originalSize": [
+      960,
+      504
+    ],
+    "publicSize": [
+      960,
+      504
+    ],
+    "treatment": "원본 비율 유지, 크기 최적화"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/02_기획계기_인스타릴스/05_꽃다발_릴스.jpeg",
+    "output": "/story/reel-flowers.webp",
+    "originalSize": [
+      786,
+      1536
+    ],
+    "publicSize": [
+      691,
+      1350
+    ],
+    "treatment": "전체 흐림 및 계정 영역 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/02_기획계기_인스타릴스/03_빼빼로_릴스.jpeg",
+    "output": "/story/reel-gift.webp",
+    "originalSize": [
+      786,
+      1536
+    ],
+    "publicSize": [
+      691,
+      1350
+    ],
+    "treatment": "전체 흐림 및 계정 영역 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/02_기획계기_인스타릴스/01_남자친구_사진릴스.jpeg",
+    "output": "/story/reel-date.webp",
+    "originalSize": [
+      909,
+      1536
+    ],
+    "publicSize": [
+      799,
+      1350
+    ],
+    "treatment": "전체 흐림 및 계정 영역 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/03_PPT_초기시안/01_발견_디자인시안.png",
+    "output": "/story/concept-discovery.webp",
+    "originalSize": [
+      941,
+      1671
+    ],
+    "publicSize": [
+      760,
+      1350
+    ],
+    "treatment": "원본 비율 유지, 크기 최적화"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/03_PPT_초기시안/02_내취향_디자인시안.png",
+    "output": "/story/concept-taste.webp",
+    "originalSize": [
+      887,
+      1774
+    ],
+    "publicSize": [
+      675,
+      1350
+    ],
+    "treatment": "원본 비율 유지, 크기 최적화"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/04_P0-8_실제앱화면/04_우리_로컬프로필.png",
+    "output": "/screens/profiles.webp",
+    "treatment": "기존 제공본과 동일 화면; 공개용 식별정보/외부 콘텐츠 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/04_P0-8_실제앱화면/01_발견_임베드.png",
+    "output": "/screens/discovery.webp",
+    "treatment": "기존 제공본과 동일 화면; 공개용 식별정보/외부 콘텐츠 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/04_P0-8_실제앱화면/05_인스타그램_공유받기.png",
+    "output": "/screens/share.webp",
+    "treatment": "기존 제공본과 동일 화면; 공개용 식별정보/외부 콘텐츠 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/04_P0-8_실제앱화면/03_보관함.png",
+    "output": "/screens/library.webp",
+    "treatment": "기존 제공본과 동일 화면; 공개용 식별정보/외부 콘텐츠 가림"
+  },
+  {
+    "source": "CoupleReels_소개사이트_사진소스/04_P0-8_실제앱화면/02_내취향.png",
+    "output": "/screens/taste.webp",
+    "treatment": "기존 제공본과 동일 화면; 공개용 식별정보/외부 콘텐츠 가림"
+  }
+]
